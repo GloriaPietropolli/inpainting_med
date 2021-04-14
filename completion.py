@@ -98,11 +98,3 @@ class CompletionN(nn.Module):
         x = self.bn16(self.af16(self.conv16(x)))
         x = self.act17(self.conv17(x))
         return x
-
-
-
-
-
-
-
-
