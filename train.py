@@ -21,3 +21,13 @@ mean_value_pixel = MV_pixel(train_dataset)
 
 # transform the mean_value_pixel (an array of length 3) into a tensor of the same shape as the input's ones
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 3, 1, 1, 1))
+
+# definitions of the hyperparameters
+alpha = 4e-4
+alpha = torch.tensor(alpha)
+
+# PHASE 1
+# COMPLETION NETWORK is trained with the MSE loss for T_c iterations
+model_completion = CompletionN()
+optim_completion = Adam(model_completion.parameters())
+
