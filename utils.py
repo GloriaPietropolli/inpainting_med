@@ -49,3 +49,15 @@ def generate_hole_area(size, mask_size):
     offset_y = random.randint(0, mask_h - area_h)
     offset_z = random.randint(0, mask_d - area_d)
     return ((offset_x, offset_y, offset_z), (area_w, area_h, area_d))
+
+
+def crop(x, area):
+    """
+    x = torch.tensor (N,C,D,H,W)
+    area = ((left corner of the area to be cropped), (depth, width, height to be crop))
+    """
+    x_left_corner, y_left_corner, z_left_corner = area[0]
+    w, h, d = area[1]
+    cropped_tensor = x[:, :, z_left_corner:z_left_corner + d, y_left_corner:y_left_corner + h,
+                       x_left_corner:x_left_corner + w]
+    return cropped_tensor

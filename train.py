@@ -1,7 +1,7 @@
 """
 Implementation of the training routine for the 3D CNN with GAN
 
-- train_dataset : list/array of 4D (or 5D ?) tensor in form (input_channels, D_in, H_in, W_in)
+- train_dataset : list/array of 4D (or 5D ?) tensor in form (bs, input_channels, D_in, H_in, W_in)
 """
 
 import os
@@ -13,7 +13,7 @@ from discriminator import Discriminator
 from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
-from utils import generate_input_mask
+from utils import generate_input_mask, generate_hole_area, crop
 
 path = 'result/'  # result directory
 train_dataset = [torch.zeros(1, 1, 1)]
@@ -72,4 +72,39 @@ optimizer_discriminator = Adam(model_discriminator.parameters(), lr=lr_d)
 loss_discriminator = nn.BCELoss()
 for ep in range(epoch2):
     for training_x in train_dataset:
-        pass
+        # fake forward
+        hole_area_fake = generate_hole_area((ld_input_size, ld_input_size, ld_input_size),
+                                            (training_x[4], training_x[3], training_x[2]))
+        mask = generate_input_mask(
+            shape=(training_x.shape[0], 1, training_x.shape[2], training_x.shape[3], training_x.shape[4]),
+            hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
+            hole_area=hole_area_fake)
+        fake = torch.zeros((len(training_x), 1))
+        training_x_masked = training_x - training_x * mask + mean_value_pixel * mask  # mask the training tensor with
+        input_completion = torch.cat((training_x_masked, mask), dim=1)
+        output_completion = model_completion(input_completion)
+        input_global_discriminator_fake = output_completion.detach()
+        input_local_discriminator_fake = crop(input_global_discriminator_fake, hole_area_fake)
+        output_fake = model_discriminator((input_local_discriminator_fake, input_global_discriminator_fake))
+        loss_fake = loss_discriminator(output_fake, fake)
+
+        # real forward
+        hole_area_real = generate_hole_area((ld_input_size, ld_input_size, ld_input_size),
+                                            (training_x[4], training_x[3], training_x[2]))
+        real = torch.ones((len(training_x), 1))
+        input_global_discriminator_real = training_x
+        input_local_discriminator_real = crop(training_x, hole_area_real)
+        output_real = model_discriminator((input_local_discriminator_real, input_global_discriminator_real))
+        loss_real = loss_discriminator(output_real, real)
+
+        loss = (loss_real + loss_fake)/2.0
+
+        print(f"[PHASE2 : EPOCH]: {ep}, [LOSS]: {loss.item():.6f}")
+        display.clear_output(wait=True)
+
+        loss.backward()
+        optimizer_discriminator.step()
+        optimizer_discriminator.zero_grad()
+
+# PHASE 3
+# both the completion network and content discriminators are trained jointly until the end of training.
