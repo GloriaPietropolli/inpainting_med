@@ -4,7 +4,6 @@ Implementation of the training routine for the 3D CNN with GAN
 - train_dataset : list/array of 4D (or 5D ?) tensor in form (bs, input_channels, D_in, H_in, W_in)
 """
 
-import os
 import torch
 import torch.nn as nn
 from torch.optim import Adam

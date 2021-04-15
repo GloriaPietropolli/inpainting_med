@@ -3,9 +3,13 @@ Routine for the creation of the parallelepiped that composed the training set
 """
 import torch
 import numpy as np
+import netCDF4 as nc
+import pandas as pd
+from index_float import list_float_total
 
 constant_latitude = 111  # 1° of latitude corresponds to 111 km
 constant_longitude = 111  # 1° of latitude corresponds to 111 km
+float_path = "../FLOAT_BIO/"
 
 
 def create_box(batch, number_channel, lat, lon, depth, resolution):
@@ -28,3 +32,31 @@ def create_box(batch, number_channel, lat, lon, depth, resolution):
     d = np.int((depth_max - depth_min) / d_res + 1)
     empty_parallelepiped = torch.zeros(batch, number_channel, d, h, w)
     return empty_parallelepiped
+
+
+def insert_model_values():
+    pass
+
+
+def insert_sat_values():
+    pass
+
+
+def insert_float_values(parallelepiped=None):
+    """
+    Function that update the parallelepiped updating the voxel where the float info is avaiable
+    """
+    data = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 0]
+    list_data = []
+    for i in data:
+        list_data.append(i)
+    for float_number in list_float_total:
+        for i in range(np.size(list_data)):
+            if float_number == list_data[i][0:7]:
+                path_current_float = float_path + str(float_number) + "/" + list_data[i]
+                ds = nc.Dataset(path_current_float)
+    return
+
+# box = create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))
+# print(box.size())
+insert_float_values()
