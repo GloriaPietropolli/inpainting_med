@@ -53,9 +53,9 @@ def insert_float_values(parallelepiped=None):
     for float_number in list_float_total:
         for i in range(np.size(list_data)):
             if float_number == list_data[i][0:7]:
-                path_current_float = float_path + str(float_number) + "/" + list_data[i]
+                path_current_float = float_path + "data/" + list_data[i]
                 ds = nc.Dataset(path_current_float)
-    return
+    return print(ds)
 
 # box = create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))
 # print(box.size())
