@@ -68,8 +68,19 @@ def create_box(batch, number_channel, lat, lon, depth, resolution):
     return empty_parallelepiped
 
 
-s
 list_parallelepiped = [create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))]
+
+
+def find_index(lat, lat_limits, lat_res):
+    """
+    Function that given a latitude as input return the index where to place it in the tensor
+    lat = latitude considered
+    lat_limits = (lat_min, lat_max)
+    lat_res = resolution of a voxel
+    """
+    lat_min, lat_max = lat_limits
+    lat_index = np.int((lat - lat_min) / lat_res)
+    return lat_index
 
 
 def insert_model_values():
@@ -80,7 +91,7 @@ def insert_sat_values():
     pass
 
 
-def insert_float_values(lat_limits, lon_limits, depth_limits):
+def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
     """
     Function that update the parallelepiped updating the voxel where the float info is available
     lat_limits = (lat_min, lat_max)
@@ -93,6 +104,7 @@ def insert_float_values(lat_limits, lon_limits, depth_limits):
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
     depth_min, depth_max = depth_limits
+    w_res, h_res, d_res = resolution
     data = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 0]
     list_data = []
     for i in data:
@@ -111,6 +123,11 @@ def insert_float_values(lat_limits, lon_limits, depth_limits):
                         if depth_max > depth > depth_min:
                             index = list_data_time.index(time)  # index input tensor considered, i.e. the one to update
                             select_parallelepiped = list_parallelepiped[index]
+
+                            lat_index = find_index(lat, lat_limits, w_res)
+                            lon_index = find_index(lon, lon_limits, h_res)
+                            depth_index = find_index(depth, depth_limits, depth_res)
+
                             temp = ds['TEMP'][:].data  # channel1
                             salinity = ds['PSAL'][:].data  # channel2
                             doxy = ds['DOXY'][:].data  # channel3
