@@ -68,6 +68,7 @@ def create_box(batch, number_channel, lat, lon, depth, resolution):
     return empty_parallelepiped
 
 
+s
 list_parallelepiped = [create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))]
 
 
