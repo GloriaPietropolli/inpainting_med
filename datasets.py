@@ -39,7 +39,7 @@ def create_list_date_time(years_consider):
     first_year_considered, last_year_considered = years_consider
     total_list = []
     for year in np.arange(first_year_considered, last_year_considered):
-        lists = np.arange(year, year + 0.52, 0.01)
+        lists = np.arange(year, year + 0.53, 0.01)
         for i in range(len(lists)):
             lists[i] = round(lists[i], 2)
         lists = lists.tolist()
@@ -72,17 +72,15 @@ def create_box(batch, number_channel, lat, lon, depth, resolution):
     return empty_parallelepiped
 
 
-list_parallelepiped = [create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))] * len(list_data_time)
-
-
-def find_index(lat, lat_limits, lat_res):
+def find_index(lat, lat_limits, lat_size):
     """
     Function that given a latitude/longitude/depth as input return the index where to place it in the tensor
     lat = latitude considered
     lat_limits = (lat_min, lat_max)
-    lat_res = resolution of a voxel
+    lat_size = dimension of latitude dmensin in the tensor
     """
     lat_min, lat_max = lat_limits
+    lat_res = (lat_max - lat_min) / lat_size
     lat_index = np.int((lat - lat_min) / lat_res)
     return lat_index
 
@@ -109,56 +107,65 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
     lon_min, lon_max = lon_limits
     depth_min, depth_max = depth_limits
     w_res, h_res, d_res = resolution
-    data = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 0]
-    list_data = []
-    for i in data:
-        list_data.append(i)
+
+    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1)
+    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d = np.int((depth_max - depth_min) / d_res + 1)
+
+    list_data = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 0].tolist()
+
     for float_number in list_float_total:
-        for i in range(np.size(list_data)):
+        for i in range(np.size(list_data)):  # indexing on list_data
             if float_number == list_data[i][0:7]:
                 path_current_float = float_path + "data/" + list_data[i]
                 ds = nc.Dataset(path_current_float)
 
-                variab = []
+                var_list = []
                 for var in ds.variables:
-                    variab.append(var)
+                    var_list.append(var)
 
                 time = read_date_time(ds['DATE_CREATION'][:].data)  # 2015.22
+
                 lat = float(ds['LATITUDE'][:].data)  # single value
                 lon = float(ds['LONGITUDE'][:].data)  # single value
-                depth_list = ds['PRES'][:].data  # list of value
+
+                lat_index = find_index(lat, lat_limits, w)
+                lon_index = find_index(lon, lon_limits, h)
+
+                depth_list = ds['PRES'][:].data[0]  # list of value
+
                 temp = ds['TEMP'][:].data[0]  # list of value
                 salinity = ds['PSAL'][:].data[0]  # list of value
-                if 'DOXY' not in var:
+                if 'DOXY' not in var_list:
                     continue
                 doxy = ds['DOXY'][:].data[0]  # list of value
+
                 if lat_max > lat > lat_min:
                     if lon_max > lon > lon_min:
                         for depth in depth_list:
-                            depth = depth[0]
                             if depth_max > depth > depth_min:
-                                index = list_data_time.index(time)  # index input ten considered, i.e. the one to update
-                                select_parallelepiped = list_parallelepiped[index]
+                                index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
+                                select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
 
-                                lat_index = find_index(lat, lat_limits, w_res)
-                                lon_index = find_index(lon, lon_limits, h_res)
-                                depth_index = find_index(depth, depth_limits, d_res)
-
+                                depth_index = find_index(depth, depth_limits, d)
                                 channel_index = np.where(depth_list == depth)[0][0]
 
                                 select_parallelepiped[:, 0, depth_index, lon_index, lat_index] = torch.tensor(
-                                    temp[channel_index])
+                                    temp[channel_index])  # update first channel
                                 select_parallelepiped[:, 1, depth_index, lon_index, lat_index] = torch.tensor(
-                                    salinity[channel_index])
+                                    salinity[channel_index])  # update second channel
                                 select_parallelepiped[:, 2, depth_index, lon_index, lat_index] = torch.tensor(
-                                    doxy[channel_index])
-
-                                # select_parallelepiped[]
-
+                                    doxy[channel_index])  # update third channel
     return
 
 
 # box = create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))
-# print(box.size())
-insert_float_values((36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))
-list_parallelepiped
+batch = 1
+number_channel = 3  # 1: temp, 2:salinity, 3:doxy
+lat = (36, 44)
+lon = (2, 9)
+depth = (1, 100)
+resolution = (12, 12, 1)
+list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution)] * len(list_data_time)
+insert_float_values(lat, lon, depth, resolution)
+print(list_parallelepiped[0].shape)
