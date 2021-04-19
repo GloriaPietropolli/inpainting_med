@@ -30,6 +30,20 @@ def read_date_time(date_time):
     return date_time_decoded
 
 
+def to_depth(press, lat):
+    """
+    convert press input in depth one
+    press = pressure in decibars
+    lat = latitude in deg
+    depth = depth in metres
+    """
+    x = np.sin(lat / 57.29578)
+    x = x * x
+    gr = 9.780318 * (1.0 + (5.2788e-3 + 2.36e-5 * x) * x) + 1.092e-6 * press
+    depth = (((-1.82e-15 * press + 2.279e-10) * press - 2.2512e-5) * press + 9.72659) * press / gr
+    return depth
+
+
 def create_list_date_time(years_consider):
     """
     Creation of a list containing date_time reference for training dataset
@@ -132,7 +146,10 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
                 lat_index = find_index(lat, lat_limits, w)
                 lon_index = find_index(lon, lon_limits, h)
 
-                depth_list = ds['PRES'][:].data[0]  # list of value
+                pres_list = ds['PRES'][:].data[0]  # list of value
+                depth_list = []
+                for pres in pres_list:
+                    depth_list.append(to_depth(pres, lat))
 
                 temp = ds['TEMP'][:].data[0]  # list of value
                 salinity = ds['PSAL'][:].data[0]  # list of value
@@ -164,7 +181,7 @@ batch = 1
 number_channel = 3  # 1: temp, 2:salinity, 3:doxy
 lat = (36, 44)
 lon = (2, 9)
-depth = (1, 100)
+depth = (1, 600)
 resolution = (12, 12, 1)
 list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution)] * len(list_data_time)
 insert_float_values(lat, lon, depth, resolution)
