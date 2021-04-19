@@ -167,12 +167,30 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
                                 depth_index = find_index(depth, depth_limits, d)
                                 channel_index = np.where(depth_list == depth)[0][0]
 
+                                temp_v, salinity_v, doxy_v = temp[channel_index], salinity[channel_index], doxy[
+                                    channel_index]
+
+                                if not -3 < temp_v < 40:
+                                    print('invalid temperature found', temp_v)
+                                    continue
+
                                 select_parallelepiped[:, 0, depth_index, lon_index, lat_index] = torch.tensor(
-                                    temp[channel_index])  # update first channel
+                                    temp_v)  # update first channel
+
+                                if not 2 < salinity_v < 41:
+                                    print('invalid psal found', salinity_v)
+                                    continue
+
                                 select_parallelepiped[:, 1, depth_index, lon_index, lat_index] = torch.tensor(
-                                    salinity[channel_index])  # update second channel
+                                    salinity_v)  # update second channel
+
+                                if not -5 < doxy_v < 600:
+                                    print('invalid doxy found', doxy_v)
+                                    continue
+
                                 select_parallelepiped[:, 2, depth_index, lon_index, lat_index] = torch.tensor(
-                                    doxy[channel_index])  # update third channel
+                                    doxy_v)  # update third channel
+
     return
 
 
@@ -187,3 +205,5 @@ list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolu
 insert_float_values(lat, lon, depth, resolution)
 j = 1
 Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
+Plot_Tensor(list_parallelepiped[j], list_data_time[j], 1)
+Plot_Tensor(list_parallelepiped[j], list_data_time[j], 2)
