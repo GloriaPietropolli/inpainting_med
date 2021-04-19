@@ -5,7 +5,7 @@ import torch
 import netCDF4 as nc
 import numpy as np
 import pandas as pd
-
+from plot_tensor import Plot_Tensor
 from index_float import list_float_total
 
 constant_latitude = 111  # 1° of latitude corresponds to 111 km
@@ -182,6 +182,8 @@ number_channel = 3  # 1: temp, 2:salinity, 3:doxy
 lat = (36, 44)
 lon = (2, 9)
 depth = (1, 600)
-resolution = (12, 12, 1)
+resolution = (12, 12, 5)
 list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution)] * len(list_data_time)
 insert_float_values(lat, lon, depth, resolution)
+j = 1
+Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
