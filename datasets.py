@@ -5,6 +5,7 @@ import torch
 import netCDF4 as nc
 import numpy as np
 import pandas as pd
+import os
 from plot_tensor import Plot_Tensor
 
 constant_latitude = 111  # 1° of latitude corresponds to 111 km
@@ -12,7 +13,7 @@ constant_longitude = 111  # 1° of latitude corresponds to 111 km
 float_path = "../FLOAT_BIO/"
 
 
-def read_date_time(date_time):
+def read_date_time_float(date_time):
     """
     Take as input a date-time in format UTF-8 and decode it in a format considering only year and month
     year + 0.01 * week
@@ -24,6 +25,19 @@ def read_date_time(date_time):
     year = np.int(date_time_decoded[0:4])
     month = np.int(date_time_decoded[4:6])
     day = np.int(date_time_decoded[6:8])
+    week = np.int(month * 4 + day / 7)
+    date_time_decoded = year + 0.01 * week
+    return date_time_decoded
+
+
+def read_date_time_sat(date_time):
+    """
+    Take as input a date-time in str format and decode it in a format considering only year and month
+    year + 0.01 * week
+    """
+    year = np.int(date_time[0:4])
+    month = np.int(date_time[4:6])
+    day = np.int(date_time[6:8])
     week = np.int(month * 4 + day / 7)
     date_time_decoded = year + 0.01 * week
     return date_time_decoded
@@ -99,8 +113,58 @@ def insert_model_values():
     pass
 
 
-def insert_sat_values():
-    pass
+def insert_sat_values(lat_limits, lon_limits, depth_limits, resolution):
+    """
+    function that update the parallelepiped updating the voxel on the surfaces
+    the only information provided is the 'CHL' ones
+    lat_limits = (lat_min, lat_max)
+    lon_limits = (lon_min, lon_max)
+    depth_limits = (depth_min, depth_max) in km
+    """
+    lat_min, lat_max = lat_limits
+    lon_min, lon_max = lon_limits
+    depth_min, depth_max = depth_limits
+    w_res, h_res, d_res = resolution
+
+    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1)
+    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d = np.int((depth_max - depth_min) / d_res + 1)
+
+    path_sat = os.getcwd() + "/WEEKLY_1_24/"
+    sat_measurement = os.listdir(path_sat)
+
+    for sat_file in sat_measurement:
+        file = path_sat + sat_file
+        ds = nc.Dataset(file)
+
+        data_time = sat_file[0:8]
+        data_time = read_date_time_sat(data_time)
+        if data_time < 2015.01:
+            continue
+        index = list_data_time.index(data_time)  # index input tens considered, i.e. the one to upd
+        select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
+
+        latitude_list = ds['lat'][:].data
+        longitude_list = ds['lon'][:].data
+
+        depth = float(ds['depth'][:].data)
+        depth_index = find_index(depth, depth_limits, d)  # 0 bc we are on the surfaces
+
+        matrix_chl = ds['CHL'][0::].data[0]
+
+        for i in range(len(latitude_list)):
+            for j in range(len(longitude_list)):
+                lat = latitude_list[i]
+                lon = longitude_list[j]
+                chl = matrix_chl[i, j]
+                if chl == -999:
+                    continue
+                if lat_max > lat > lat_min:
+                    if lon_max > lon > lon_min:
+                        lat_index = find_index(lat, lat_limits, w)
+                        lon_index = find_index(lon, lon_limits, h)
+                        select_parallelepiped[0, 3, depth_index, lon_index, lat_index] = float(chl)
+    return
 
 
 def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
@@ -109,9 +173,7 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
     lat_limits = (lat_min, lat_max)
     lon_limits = (lon_min, lon_max)
     depth_limits = (depth_min, depth_max) in km
-    parallelepiped = parallelepiped to fill with float values
-    index_parallelepiped = represents the index in the input parallelepiped list, i.e. the week considered
-                           for example index_parallelepiped = 1 means we are considering first week of 2015
+    resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
     """
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
@@ -132,7 +194,7 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
         for var in ds.variables:
             var_list.append(var)
 
-        time = read_date_time(ds['DATE_CREATION'][:].data)  # 2015.22
+        time = read_date_time_float(ds['DATE_CREATION'][:].data)  # 2015.22
         index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
         select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
 
@@ -189,7 +251,7 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
 
 # box = create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))
 batch = 1
-number_channel = 3  # 1: temp, 2:salinity, 3:doxy
+number_channel = 4  # 1: temp, 2:salinity, 3:doxy
 lat = (36, 44)
 lon = (2, 9)
 depth = (1, 100)
@@ -197,8 +259,9 @@ resolution = (12, 12, 10)
 list_data_time = create_list_date_time((2015, 2022))
 list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution) for i in
                        range(len(list_data_time))]
-insert_float_values(lat, lon, depth, resolution)
+# insert_float_values(lat, lon, depth, resolution)
+insert_sat_values(lat, lon, depth, resolution)
 j = 12
-Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
-Plot_Tensor(list_parallelepiped[j], list_data_time[j], 1)
-Plot_Tensor(list_parallelepiped[j], list_data_time[j], 2)
+# Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
+# Plot_Tensor(list_parallelepiped[j], list_data_time[j], 1)
+# Plot_Tensor(list_parallelepiped[j], list_data_time[j], 2)
