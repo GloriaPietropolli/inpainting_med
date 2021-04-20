@@ -29,14 +29,14 @@ def read_date_time(date_time):
     return date_time_decoded
 
 
-def to_depth(press, lat):
+def to_depth(press, latitude):
     """
     convert press input in depth one
     press = pressure in decibars
     lat = latitude in deg
     depth = depth in metres
     """
-    x = np.sin(lat / 57.29578)
+    x = np.sin(latitude / 57.29578)
     x = x * x
     gr = 9.780318 * (1.0 + (5.2788e-3 + 2.36e-5 * x) * x) + 1.092e-6 * press
     depth = (((-1.82e-15 * press + 2.279e-10) * press - 2.2512e-5) * press + 9.72659) * press / gr
