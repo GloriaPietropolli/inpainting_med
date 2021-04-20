@@ -6,7 +6,6 @@ import netCDF4 as nc
 import numpy as np
 import pandas as pd
 from plot_tensor import Plot_Tensor
-from index_float import list_float_total
 
 constant_latitude = 111  # 1° of latitude corresponds to 111 km
 constant_longitude = 111  # 1° of latitude corresponds to 111 km
@@ -59,9 +58,6 @@ def create_list_date_time(years_consider):
         lists = lists.tolist()
         total_list = total_list + lists
     return total_list
-
-
-list_data_time = create_list_date_time((2015, 2022))
 
 
 def create_box(batch, number_channel, lat, lon, depth, resolution):
@@ -128,68 +124,65 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
 
     list_data = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 0].tolist()
 
-    for float_number in list_float_total:
-        for i in range(np.size(list_data)):  # indexing on list_data
-            if float_number == list_data[i][0:7]:
-                path_current_float = float_path + "data/" + list_data[i]
-                ds = nc.Dataset(path_current_float)
+    for i in range(np.size(list_data)):  # indexing on list_data
+        path_current_float = float_path + "data/" + list_data[i]
+        ds = nc.Dataset(path_current_float)
 
-                var_list = []
-                for var in ds.variables:
-                    var_list.append(var)
+        var_list = []
+        for var in ds.variables:
+            var_list.append(var)
 
-                time = read_date_time(ds['DATE_CREATION'][:].data)  # 2015.22
+        time = read_date_time(ds['DATE_CREATION'][:].data)  # 2015.22
+        index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
+        select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
 
-                lat = float(ds['LATITUDE'][:].data)  # single value
-                lon = float(ds['LONGITUDE'][:].data)  # single value
+        lat = float(ds['LATITUDE'][:].data)  # single value
+        lon = float(ds['LONGITUDE'][:].data)  # single value
 
-                lat_index = find_index(lat, lat_limits, w)
-                lon_index = find_index(lon, lon_limits, h)
+        lat_index = find_index(lat, lat_limits, w)
+        lon_index = find_index(lon, lon_limits, h)
 
-                pres_list = ds['PRES'][:].data[0]  # list of value
-                depth_list = []
-                for pres in pres_list:
-                    depth_list.append(to_depth(pres, lat))
+        pres_list = ds['PRES'][:].data[0]  # list of value
+        depth_list = []
+        for pres in pres_list:
+            depth_list.append(to_depth(pres, lat))
 
-                temp = ds['TEMP'][:].data[0]  # list of value
-                salinity = ds['PSAL'][:].data[0]  # list of value
-                if 'DOXY' not in var_list:
-                    continue
-                doxy = ds['DOXY'][:].data[0]  # list of value
+        temp = ds['TEMP'][:].data[0]  # list of value
+        salinity = ds['PSAL'][:].data[0]  # list of value
+        if 'DOXY' not in var_list:
+            continue
+        doxy = ds['DOXY'][:].data[0]  # list of value
 
-                if lat_max > lat > lat_min:
-                    if lon_max > lon > lon_min:
-                        for depth in depth_list:
-                            if depth_max > depth > depth_min:
-                                index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
-                                select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
+        if lat_max > lat > lat_min:
+            if lon_max > lon > lon_min:
+                for depth in depth_list:
+                    if depth_max > depth > depth_min:
+                        depth_index = find_index(depth, depth_limits, d)
+                        channel_index = np.where(depth_list == depth)[0][0]
 
-                                depth_index = find_index(depth, depth_limits, d)
-                                channel_index = np.where(depth_list == depth)[0][0]
+                        temp_v, salinity_v, doxy_v = temp[channel_index], salinity[channel_index], doxy[
+                            channel_index]
 
-                                temp_v, salinity_v, doxy_v = temp[channel_index], salinity[channel_index], doxy[
-                                    channel_index]
+                        if not -3 < temp_v < 40:
+                            print('invalid temperature found', temp_v)
+                            continue
 
-                                if not -3 < temp_v < 40:
-                                    print('invalid temperature found', temp_v)
-                                    continue
+                        selected_parallelepiped[0, 0, depth_index, lon_index, lat_index] = float(
+                            temp_v)  # update first channel
 
-                                select_parallelepiped[:, 0, depth_index, lon_index, lat_index] = torch.tensor(
-                                    temp_v)  # update first channel
+                        if not 2 < salinity_v < 41:
+                            print('invalid psal found', salinity_v)
+                            continue
 
-                                if not 2 < salinity_v < 41:
-                                    print('invalid psal found', salinity_v)
-                                    continue
+                        select_parallelepiped[0, 1, depth_index, lon_index, lat_index] = float(
+                            salinity_v)  # update second channel
 
-                                select_parallelepiped[:, 1, depth_index, lon_index, lat_index] = torch.tensor(
-                                    salinity_v)  # update second channel
+                        if not -5 < doxy_v < 600:
+                            # print('invalid doxy found', doxy_v)
+                            continue
 
-                                if not -5 < doxy_v < 600:
-                                    print('invalid doxy found', doxy_v)
-                                    continue
-
-                                select_parallelepiped[:, 2, depth_index, lon_index, lat_index] = torch.tensor(
-                                    doxy_v)  # update third channel
+                        select_parallelepiped[0][0, 2, depth_index, lon_index, lat_index] = float(
+                            doxy_v)  # update third channel
 
     return
 
@@ -199,11 +192,13 @@ batch = 1
 number_channel = 3  # 1: temp, 2:salinity, 3:doxy
 lat = (36, 44)
 lon = (2, 9)
-depth = (1, 600)
-resolution = (12, 12, 5)
-list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution)] * len(list_data_time)
+depth = (1, 100)
+resolution = (12, 12, 10)
+list_data_time = create_list_date_time((2015, 2022))
+list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution) for i in
+                       range(len(list_data_time))]
 insert_float_values(lat, lon, depth, resolution)
-j = 1
+j = 12
 Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
 Plot_Tensor(list_parallelepiped[j], list_data_time[j], 1)
 Plot_Tensor(list_parallelepiped[j], list_data_time[j], 2)
