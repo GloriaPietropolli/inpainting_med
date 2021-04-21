@@ -130,7 +130,7 @@ def insert_sat_values(lat_limits, lon_limits, depth_limits, resolution):
     h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
     d = np.int((depth_max - depth_min) / d_res + 1)
 
-    path_sat = os.getcwd() + "/WEEKLY_1_24/"
+    path_sat = os.getcwd() + "/WEEKLY_1_1km/"
     sat_measurement = os.listdir(path_sat)
 
     for sat_file in sat_measurement:
@@ -175,6 +175,7 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
     depth_limits = (depth_min, depth_max) in km
     resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
     """
+    set_measurement = set()
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
     depth_min, depth_max = depth_limits
@@ -185,8 +186,10 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
     d = np.int((depth_max - depth_min) / d_res + 1)
 
     list_data = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 0].tolist()
+    list_datetime = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 3].tolist()  # at
+    # each element of list_data corresponds one element of list_datetime
 
-    for i in range(np.size(list_data)):  # indexing on list_data
+    for i in range(np.size(list_data)):  # indexing on list_data and list_datetime also
         path_current_float = float_path + "data/" + list_data[i]
         ds = nc.Dataset(path_current_float)
 
@@ -194,7 +197,12 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
         for var in ds.variables:
             var_list.append(var)
 
-        time = read_date_time_float(ds['DATE_CREATION'][:].data)  # 2015.22
+        # time = read_date_time_float(ds['DATE_CREATION'][:].data)  # 2015.22
+        datetime = list_datetime[i]
+        time = read_date_time_sat(datetime)
+        if not 2020 > time > 2015:
+            print('time out of range', time)
+            continue
         index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
         select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
 
@@ -227,41 +235,63 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
 
                         if not -3 < temp_v < 40:
                             print('invalid temperature found', temp_v)
-                            continue
-
-                        selected_parallelepiped[0, 0, depth_index, lon_index, lat_index] = float(
-                            temp_v)  # update first channel
+                        else:
+                            select_parallelepiped[0, 0, depth_index, lon_index, lat_index] = float(temp_v)  # update
+                            # first channel
 
                         if not 2 < salinity_v < 41:
                             print('invalid psal found', salinity_v)
-                            continue
-
-                        select_parallelepiped[0, 1, depth_index, lon_index, lat_index] = float(
+                        else:
+                            select_parallelepiped[0, 1, depth_index, lon_index, lat_index] = float(
                             salinity_v)  # update second channel
 
                         if not -5 < doxy_v < 600:
-                            # print('invalid doxy found', doxy_v)
-                            continue
+                            print('invalid doxy found', doxy_v)
+                            select_parallelepiped[0, 2, depth_index, lon_index, lat_index] = float(doxy_v)  # update
+                            # third channel
 
-                        select_parallelepiped[0][0, 2, depth_index, lon_index, lat_index] = float(
-                            doxy_v)  # update third channel
+                        set_measurement.add(time)
 
-    return
+    return set_measurement
+
+
+def save_result(tensor_list, dir):
+    if dir == 'empty':
+        path = os.getcwd() + '/result/empty'
+    if dir == 'float':
+        path = os.getcwd() + '/result/float'
+    if dir == 'sat':
+        path = os.getcwd() + '/result/sat'
+    if dir == 'mod':
+        path = os.getcwd() + '/result/mod'
+    else:
+        print('not saving ')
+        # return
+    for i in range(len(tensor_list)):
+        date_time = list_data_time[i]
+        np.savetxt('tens_' + str(date_time) + '.csv', tensor_list[i], delimiter=',')
 
 
 # box = create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))
 batch = 1
-number_channel = 4  # 1: temp, 2:salinity, 3:doxy
+number_channel = 4  # 1: temp, 2:salinity, 3:doxy, 4: chla
 lat = (36, 44)
 lon = (2, 9)
-depth = (1, 100)
-resolution = (12, 12, 10)
+depth = (1, 600)
+resolution = (12, 12, 100)
 list_data_time = create_list_date_time((2015, 2022))
 list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution) for i in
                        range(len(list_data_time))]
-# insert_float_values(lat, lon, depth, resolution)
-insert_sat_values(lat, lon, depth, resolution)
-j = 12
-# Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
-# Plot_Tensor(list_parallelepiped[j], list_data_time[j], 1)
-# Plot_Tensor(list_parallelepiped[j], list_data_time[j], 2)
+
+set_measurement = insert_float_values(lat, lon, depth, resolution)
+print(set_measurement)
+# insert_sat_values(lat, lon, depth, resolution)
+for j in range(len(list_data_time)):
+    #   print('plotting tensor relative to time : ', list_data_time[j])
+    if list_data_time[j] in set_measurement:
+        Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
+#   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 1)
+#   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 2)
+#   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 3)
+
+# save_result(list_parallelepiped, 'empty')

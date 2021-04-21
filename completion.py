@@ -4,7 +4,7 @@ definition of the COMPLETION NETWORK (fully CNN) that compose the architecture
 import torch.nn as nn
 
 
-in_channels = 4  # number of channels of the input 3d spaces
+in_channels = 4  # number of channels of the input
 out_channels = in_channels - 1  # same channels of the input except for the mask channel
 
 

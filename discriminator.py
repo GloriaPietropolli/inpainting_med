@@ -7,6 +7,8 @@ for the implementation of the GAN
 import torch.nn as nn
 from layers import Flatten, Concatenate
 
+in_channels = 4  # number of channels of the input 3d spaces
+
 
 class LocDiscriminator(nn.Module):
     def __init__(self, input_shape):

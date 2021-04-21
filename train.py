@@ -14,15 +14,17 @@ from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
 from utils import generate_input_mask, generate_hole_area, crop
 
+num_channel = 4
+
 path = 'result/'  # result directory
-train_dataset = [torch.zeros(1, 1, 1)]
-test_dataset = [torch.zeros(1, 1, 1)]
+train_dataset = [torch.zeros(1, num_channel, 1, 1)]
+test_dataset = [torch.zeros(1, num_channel, 1)]
 
 # compute the mean of the channel of the training set
 mean_value_pixel = MV_pixel(train_dataset)
 
 # transform the mean_value_pixel (an array of length 3) into a tensor of the same shape as the input's ones
-mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 3, 1, 1, 1))
+mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))
 
 # definitions of the hyperparameters
 alpha = 4e-4
@@ -65,8 +67,8 @@ for ep in range(epoch1):
 # PHASE 2
 # COMPLETION NETWORK is FIXED and DISCRIMINATORS are trained form scratch for T_d (=epoch2) iterations
 
-model_discriminator = Discriminator(loc_input_shape=(3, ld_input_size, ld_input_size, ld_input_size),
-                                    glo_input_shape=(3, cn_input_size, cn_input_size, cn_input_size))
+model_discriminator = Discriminator(loc_input_shape=(num_channel, ld_input_size, ld_input_size, ld_input_size),
+                                    glo_input_shape=(num_channel, cn_input_size, cn_input_size, cn_input_size))
 optimizer_discriminator = Adam(model_discriminator.parameters(), lr=lr_d)
 loss_discriminator = nn.BCELoss()
 for ep in range(epoch2):
