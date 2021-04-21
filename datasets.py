@@ -109,8 +109,42 @@ def find_index(lat, lat_limits, lat_size):
     return lat_index
 
 
-def insert_model_values():
-    pass
+def insert_model_values(year, lat_limits, lon_limits, depth_limits, resolution):
+    """
+        function that update the parallelepiped updating all the voxel with MODEL information
+        year = folder of the year we are considering
+        lat_limits = (lat_min, lat_max)
+        lon_limits = (lon_min, lon_max)
+        depth_limits = (depth_min, depth_max) in km
+        """
+    lat_min, lat_max = lat_limits
+    lon_min, lon_max = lon_limits
+    depth_min, depth_max = depth_limits
+    w_res, h_res, d_res = resolution
+
+    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1)
+    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d = np.int((depth_max - depth_min) / d_res + 1)
+
+    path_model = os.getcwd() + "/MODEL/" + str(year) + '/phys/'
+    model_files = os.listdir(path_model)
+    for model_file in model_files:
+        file = path_model + model_file
+        ds = nc.Dataset(file)
+
+        time = model_file[4:12]
+        time = read_date_time_sat(time)
+        index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
+        select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
+
+        latitude_list = ds['nav_lat'][:].data
+        longitude_list = ds['nav_lon'][:].data
+        depth_list = ds['deptht'][:].data
+
+        temp = torch.tensor(ds['votemper'][:].data)[0, :, :, :]
+        salinity = torch.tensor(ds['vosaline'][:].data)[0, :, :, :]
+
+    return
 
 
 def insert_sat_values(lat_limits, lon_limits, depth_limits, resolution):
@@ -243,7 +277,7 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
                             print('invalid psal found', salinity_v)
                         else:
                             select_parallelepiped[0, 1, depth_index, lon_index, lat_index] = float(
-                            salinity_v)  # update second channel
+                                salinity_v)  # update second channel
 
                         if not -5 < doxy_v < 600:
                             print('invalid doxy found', doxy_v)
@@ -283,13 +317,13 @@ list_data_time = create_list_date_time((2015, 2022))
 list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution) for i in
                        range(len(list_data_time))]
 
-set_measurement = insert_float_values(lat, lon, depth, resolution)
-print(set_measurement)
+# set_measurement = insert_float_values(lat, lon, depth, resolution)
+insert_model_values(2015, lat, lon, depth, resolution)
 # insert_sat_values(lat, lon, depth, resolution)
-for j in range(len(list_data_time)):
-    #   print('plotting tensor relative to time : ', list_data_time[j])
-    if list_data_time[j] in set_measurement:
-        Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
+# for j in range(len(list_data_time)):
+#    print('plotting tensor relative to time : ', list_data_time[j])
+#    if list_data_time[j] in set_measurement:
+#        Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
 #   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 1)
 #   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 2)
 #   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 3)
