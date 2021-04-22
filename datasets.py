@@ -109,18 +109,20 @@ def find_index(lat, lat_limits, lat_size):
     return lat_index
 
 
-def insert_model_values(year, lat_limits, lon_limits, depth_limits, resolution):
+def insert_model_values(year, lat_limits, lon_limits, depth_limits, year_limits, resolution):
     """
         function that update the parallelepiped updating all the voxel with MODEL information
         year = folder of the year we are considering
         lat_limits = (lat_min, lat_max)
         lon_limits = (lon_min, lon_max)
         depth_limits = (depth_min, depth_max) in km
+        year_limits = (year_min, year_max)
         resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
         """
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
     depth_min, depth_max = depth_limits
+    year_min, year_max = year_limits
     w_res, h_res, d_res = resolution
 
     w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1)
@@ -135,6 +137,8 @@ def insert_model_values(year, lat_limits, lon_limits, depth_limits, resolution):
 
         time = model_file[4:12]
         time = read_date_time_sat(time)
+        if not year_min < time < year_max:
+            continue
         index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
         select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
 
@@ -336,6 +340,7 @@ number_channel = 4  # 1: temp, 2:salinity, 3:doxy, 4: chla
 latitude_interval = (36, 44)
 longitude_interval = (2, 9)
 depth_interval = (1, 200)
+year_interval = (2015, 2016)
 resolution = (12, 12, 50)
 list_data_time = create_list_date_time((2015, 2022))
 list_parallelepiped = [
@@ -344,8 +349,8 @@ list_parallelepiped = [
 
 # set_measurement = insert_float_values(latitude_interval, longitude_interval, depth_interval, resolution)
 # insert_sat_values(latitude_interval, longitude_interval, depth_interval, resolution)
-# insert_model_values(2015, latitude_interval, longitude_interval, depth_interval, resolution)
+insert_model_values(2015, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
 channels = [0]
-plot_routine('model2015', list_parallelepiped, list_data_time, channels)
+plot_routine('model2015', list_parallelepiped, list_data_time, channels, year_interval)
 
 # save_result(list_parallelepiped, 'empty')

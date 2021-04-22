@@ -29,7 +29,7 @@ def Plot_Tensor(kindof, tensor, data_time, channel):
     plt.colorbar()
 
 
-def plot_routine(kindof, list_parallelepiped, list_data_time, channels):
+def plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval):
     """
     measurement plot different for each kind of data (float/sat/tensor)
     kindof = requires a str (float, sat or tensor)
@@ -37,8 +37,12 @@ def plot_routine(kindof, list_parallelepiped, list_data_time, channels):
     list_data_time = list of reference date time associated to the list of tensor
     channels = list of variable we want to plot
     """
+    year_min, year_max = year_interval
     for j in range(len(list_data_time)):
-        print('plotting tensor relative to time : ', list_data_time[j])
-        for channel in channels:
-            Plot_Tensor(kindof, list_parallelepiped[j], list_data_time[j], channel)
+        time_considered = list_data_time[j]
+        tensor_considered = list_parallelepiped[j]
+        if year_min < time_considered < year_max:
+            print('plotting tensor relative to time : ', time_considered)
+            for channel in channels:
+                Plot_Tensor(kindof, tensor_considered, time_considered, channel)
 
