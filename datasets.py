@@ -116,6 +116,7 @@ def insert_model_values(year, lat_limits, lon_limits, depth_limits, resolution):
         lat_limits = (lat_min, lat_max)
         lon_limits = (lon_min, lon_max)
         depth_limits = (depth_min, depth_max) in km
+        resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
         """
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
@@ -141,8 +142,23 @@ def insert_model_values(year, lat_limits, lon_limits, depth_limits, resolution):
         longitude_list = ds['nav_lon'][:].data
         depth_list = ds['deptht'][:].data
 
-        temp = torch.tensor(ds['votemper'][:].data)[0, :, :, :]
-        salinity = torch.tensor(ds['vosaline'][:].data)[0, :, :, :]
+        temp_tens = torch.tensor(ds['votemper'][:].data)[0, :, :, :]  # tensor indexes as temp(depth, y, x)
+        salinity_tens = torch.tensor(ds['vosaline'][:].data)[0, :, :, :]
+
+        for i in range(len(latitude_list)):  # indexing over the latitude (3rd component of the tensor)
+            for j in range(len(longitude_list)):  # indexing over the longitude (2nd component of the tensor)
+                for k in range(len(depth_list)):  # indexing over the depth (1st component of the tensor)
+                    latitude = latitude_list[i]
+                    longitude = longitude_list[j]
+                    depth = depth_list[k]
+
+                    temp = temp_tens[k, j, i].item()
+                    salinity = salinity_tens[k, j, i].item()
+
+                    if lat_max > lat > lat_min:
+                        if lon_max > lon > lon_min:
+                            if depth_max > depth > depth_min:
+                                pass
 
     return
 
@@ -154,6 +170,7 @@ def insert_sat_values(lat_limits, lon_limits, depth_limits, resolution):
     lat_limits = (lat_min, lat_max)
     lon_limits = (lon_min, lon_max)
     depth_limits = (depth_min, depth_max) in km
+    resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
     """
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
