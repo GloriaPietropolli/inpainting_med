@@ -13,23 +13,6 @@ constant_longitude = 111  # 1° of latitude corresponds to 111 km
 float_path = "../FLOAT_BIO/"
 
 
-def read_date_time_float(date_time):
-    """
-    Take as input a date-time in format UTF-8 and decode it in a format considering only year and month
-    year + 0.01 * week
-    """
-    date_time_decoded = ''
-    for i in range(0, 14):
-        new_digit = date_time[i].decode('UTF-8')
-        date_time_decoded += new_digit
-    year = np.int(date_time_decoded[0:4])
-    month = np.int(date_time_decoded[4:6])
-    day = np.int(date_time_decoded[6:8])
-    week = np.int(month * 4 + day / 7)
-    date_time_decoded = year + 0.01 * week
-    return date_time_decoded
-
-
 def read_date_time_sat(date_time):
     """
     Take as input a date-time in str format and decode it in a format considering only year and month
@@ -37,6 +20,7 @@ def read_date_time_sat(date_time):
     """
     year = np.int(date_time[0:4])
     month = np.int(date_time[4:6])
+    month = month - 1
     day = np.int(date_time[6:8])
     week = np.int(month * 4 + day / 7)
     date_time_decoded = year + 0.01 * week
@@ -109,7 +93,7 @@ def find_index(lat, lat_limits, lat_size):
     return lat_index
 
 
-def insert_model_values(year, lat_limits, lon_limits, depth_limits, year_limits, resolution):
+def insert_model_phys_values(year, lat_limits, lon_limits, depth_limits, year_limits, resolution):
     """
         function that update the parallelepiped updating all the voxel with MODEL information
         year = folder of the year we are considering
@@ -129,11 +113,12 @@ def insert_model_values(year, lat_limits, lon_limits, depth_limits, year_limits,
     h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
     d = np.int((depth_max - depth_min) / d_res + 1)
 
-    path_model = os.getcwd() + "/MODEL/" + str(year) + '/phys/'
-    model_files = os.listdir(path_model)
-    for model_file in model_files:
-        file = path_model + model_file
-        ds = nc.Dataset(file)
+    path_phys = os.getcwd() + "/MODEL/" + str(year) + '/phys/'
+    phys_files = os.listdir(path_phys)
+
+    for model_file in phys_files:
+        file_phys = path_physl + model_file
+        ds_phys = nc.Dataset(file_phys)
 
         time = model_file[4:12]
         time = read_date_time_sat(time)
@@ -142,12 +127,12 @@ def insert_model_values(year, lat_limits, lon_limits, depth_limits, year_limits,
         index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
         select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
 
-        latitude_list = ds['nav_lat'][:].data
-        longitude_list = ds['nav_lon'][:].data
-        depth_list = ds['deptht'][:].data
+        latitude_list = ds_phys['nav_lat'][:].data
+        longitude_list = ds_phys['nav_lon'][:].data
+        depth_list = ds_phys['deptht'][:].data
 
-        temp_tens = torch.tensor(ds['votemper'][:].data)[0, :, :, :]  # tensor indexes as temp(depth, y, x)
-        salinity_tens = torch.tensor(ds['vosaline'][:].data)[0, :, :, :]
+        temp_tens = torch.tensor(ds_phys['votemper'][:].data)[0, :, :, :]  # tensor indexes as temp(depth, y, x)
+        salinity_tens = torch.tensor(ds_phys['vosaline'][:].data)[0, :, :, :]
 
         for i in range(len(latitude_list)):  # indexing over the latitude (3rd component of the tensor)
             for j in range(len(longitude_list)):  # indexing over the longitude (2nd component of the tensor)
@@ -170,6 +155,128 @@ def insert_model_values(year, lat_limits, lon_limits, depth_limits, year_limits,
                                     select_parallelepiped[0, 0, depth_index, longitude_index, latitude_index] = temp
                                 if 2 < salinity < 41:
                                     select_parallelepiped[0, 1, depth_index, longitude_index, latitude_index] = salinity
+
+    return
+
+
+def insert_model_doxy_values(year, lat_limits, lon_limits, depth_limits, year_limits, resolution):
+    """
+        function that update the parallelepiped updating all the voxel with MODEL information
+        year = folder of the year we are considering
+        lat_limits = (lat_min, lat_max)
+        lon_limits = (lon_min, lon_max)
+        depth_limits = (depth_min, depth_max) in km
+        year_limits = (year_min, year_max)
+        resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
+    """
+    lat_min, lat_max = lat_limits
+    lon_min, lon_max = lon_limits
+    depth_min, depth_max = depth_limits
+    year_min, year_max = year_limits
+    w_res, h_res, d_res = resolution
+
+    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1)
+    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d = np.int((depth_max - depth_min) / d_res + 1)
+
+    path_doxy = os.getcwd() + "/MODEL/" + str(year) + '/O2o/'
+    doxy_files = os.listdir(path_doxy)
+    for model_file in doxy_files:
+        file_doxy = path_doxy + model_file
+        ds_doxy = nc.Dataset(file_doxy)
+
+        time = model_file[4:12]
+        time = read_date_time_sat(time)
+        if not year_min < time < year_max:
+            continue
+        index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
+        select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
+
+        latitude_list = ds_doxy['lat'][:].data
+        longitude_list = ds_doxy['lon'][:].data
+        depth_list = ds_doxy['depth'][:].data
+
+        doxy_tens = torch.tensor(ds_doxy['O2o'][:].data)[0, :, :, :]  # tensor indexes as temp(depth, x, y)
+
+        for i in range(len(latitude_list)):  # indexing over the latitude (3rd component of the tensor)
+            for j in range(len(longitude_list)):  # indexing over the longitude (2nd component of the tensor)
+                for k in range(len(depth_list)):  # indexing over the depth (1st component of the tensor)
+                    latitude = latitude_list[i]
+                    longitude = longitude_list[j]
+                    depth = depth_list[k]
+
+                    doxy = float(doxy_tens[k, i, j].item())
+
+                    if lat_max > latitude > lat_min:
+                        if lon_max > longitude > lon_min:
+                            if depth_max > depth > depth_min:
+                                latitude_index = find_index(latitude, lat_limits, w)
+                                longitude_index = find_index(longitude, lon_limits, h)
+                                depth_index = find_index(depth, depth_limits, d)
+
+                                if -5 < doxy < 600:
+                                    select_parallelepiped[0, 2, depth_index, longitude_index, latitude_index] = doxy
+
+    return
+
+
+def insert_model_chl_values(year, lat_limits, lon_limits, depth_limits, year_limits, resolution):
+    """
+        function that update the parallelepiped updating all the voxel with MODEL information
+        year = folder of the year we are considering
+        lat_limits = (lat_min, lat_max)
+        lon_limits = (lon_min, lon_max)
+        depth_limits = (depth_min, depth_max) in km
+        year_limits = (year_min, year_max)
+        resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
+    """
+    lat_min, lat_max = lat_limits
+    lon_min, lon_max = lon_limits
+    depth_min, depth_max = depth_limits
+    year_min, year_max = year_limits
+    w_res, h_res, d_res = resolution
+
+    w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1)
+    h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
+    d = np.int((depth_max - depth_min) / d_res + 1)
+
+    path_chl = os.getcwd() + "/MODEL/" + str(year) + '/P_l/'
+    chl_files = os.listdir(path_chl)
+    for model_file in chl_files:
+        file_chl = path_chl + model_file
+        ds_chl = nc.Dataset(file_chl)
+
+        time = model_file[4:12]
+        time = read_date_time_sat(time)
+        if not year_min < time < year_max:
+            continue
+        index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
+        select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
+
+        latitude_list = ds_chl['lat'][:].data
+        longitude_list = ds_chl['lon'][:].data
+        depth_list = ds_chl['depth'][:].data
+
+        chl_tens = torch.tensor(ds_chl['P_l'][:].data)[0, :, :, :]  # tensor indexes as temp(depth, x, y)
+
+        for i in range(len(latitude_list)):  # indexing over the latitude (3rd component of the tensor)
+            for j in range(len(longitude_list)):  # indexing over the longitude (2nd component of the tensor)
+                for k in range(len(depth_list)):  # indexing over the depth (1st component of the tensor)
+                    latitude = latitude_list[i]
+                    longitude = longitude_list[j]
+                    depth = depth_list[k]
+
+                    chl = float(chl_tens[k, i, j].item())
+
+                    if lat_max > latitude > lat_min:
+                        if lon_max > longitude > lon_min:
+                            if depth_max > depth > depth_min:
+                                latitude_index = find_index(latitude, lat_limits, w)
+                                longitude_index = find_index(longitude, lon_limits, h)
+                                depth_index = find_index(depth, depth_limits, d)
+
+                                if -5 < chl < 600:
+                                    select_parallelepiped[0, 3, depth_index, longitude_index, latitude_index] = chl
 
     return
 
@@ -334,7 +441,6 @@ def save_result(tensor_list, dir):
         np.savetxt('tens_' + str(date_time) + '.csv', tensor_list[i], delimiter=',')
 
 
-# box = create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))
 batch = 1
 number_channel = 4  # 1: temp, 2:salinity, 3:doxy, 4: chla
 latitude_interval = (36, 44)
@@ -342,6 +448,7 @@ longitude_interval = (2, 9)
 depth_interval = (1, 200)
 year_interval = (2015, 2016)
 resolution = (12, 12, 50)
+
 list_data_time = create_list_date_time((2015, 2022))
 list_parallelepiped = [
     create_box(batch, number_channel, latitude_interval, longitude_interval, depth_interval, resolution) for i in
@@ -349,8 +456,8 @@ list_parallelepiped = [
 
 # set_measurement = insert_float_values(latitude_interval, longitude_interval, depth_interval, resolution)
 # insert_sat_values(latitude_interval, longitude_interval, depth_interval, resolution)
-insert_model_values(2015, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
-channels = [0]
+insert_model_doxy_values(2015, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+channels = [2]
 plot_routine('model2015', list_parallelepiped, list_data_time, channels, year_interval)
 
 # save_result(list_parallelepiped, 'empty')
