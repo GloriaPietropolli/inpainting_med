@@ -6,7 +6,7 @@ import netCDF4 as nc
 import numpy as np
 import pandas as pd
 import os
-from plot_tensor import Plot_Tensor
+from plot_tensor import plot_routine
 
 constant_latitude = 111  # 1° of latitude corresponds to 111 km
 constant_longitude = 111  # 1° of latitude corresponds to 111 km
@@ -152,13 +152,20 @@ def insert_model_values(year, lat_limits, lon_limits, depth_limits, resolution):
                     longitude = longitude_list[j]
                     depth = depth_list[k]
 
-                    temp = temp_tens[k, j, i].item()
-                    salinity = salinity_tens[k, j, i].item()
+                    temp = float(temp_tens[k, i, j].item())
+                    salinity = float(salinity_tens[k, i, j].item())
 
-                    if lat_max > lat > lat_min:
-                        if lon_max > lon > lon_min:
+                    if lat_max > latitude > lat_min:
+                        if lon_max > longitude > lon_min:
                             if depth_max > depth > depth_min:
-                                pass
+                                latitude_index = find_index(latitude, lat_limits, w)
+                                longitude_index = find_index(longitude, lon_limits, h)
+                                depth_index = find_index(depth, depth_limits, d)
+
+                                if -3 < temp < 40:
+                                    select_parallelepiped[0, 0, depth_index, longitude_index, latitude_index] = temp
+                                if 2 < salinity < 41:
+                                    select_parallelepiped[0, 1, depth_index, longitude_index, latitude_index] = salinity
 
     return
 
@@ -326,23 +333,19 @@ def save_result(tensor_list, dir):
 # box = create_box(1, 5, (36, 44), (2, 9), (0, 0.6), (12, 12, 0.01))
 batch = 1
 number_channel = 4  # 1: temp, 2:salinity, 3:doxy, 4: chla
-lat = (36, 44)
-lon = (2, 9)
-depth = (1, 600)
-resolution = (12, 12, 100)
+latitude_interval = (36, 44)
+longitude_interval = (2, 9)
+depth_interval = (1, 200)
+resolution = (12, 12, 50)
 list_data_time = create_list_date_time((2015, 2022))
-list_parallelepiped = [create_box(batch, number_channel, lat, lon, depth, resolution) for i in
-                       range(len(list_data_time))]
+list_parallelepiped = [
+    create_box(batch, number_channel, latitude_interval, longitude_interval, depth_interval, resolution) for i in
+    range(len(list_data_time))]
 
-# set_measurement = insert_float_values(lat, lon, depth, resolution)
-insert_model_values(2015, lat, lon, depth, resolution)
-# insert_sat_values(lat, lon, depth, resolution)
-# for j in range(len(list_data_time)):
-#    print('plotting tensor relative to time : ', list_data_time[j])
-#    if list_data_time[j] in set_measurement:
-#        Plot_Tensor(list_parallelepiped[j], list_data_time[j], 0)
-#   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 1)
-#   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 2)
-#   Plot_Tensor(list_parallelepiped[j], list_data_time[j], 3)
+# set_measurement = insert_float_values(latitude_interval, longitude_interval, depth_interval, resolution)
+# insert_sat_values(latitude_interval, longitude_interval, depth_interval, resolution)
+# insert_model_values(2015, latitude_interval, longitude_interval, depth_interval, resolution)
+channels = [0]
+plot_routine('model2015', list_parallelepiped, list_data_time, channels)
 
 # save_result(list_parallelepiped, 'empty')
