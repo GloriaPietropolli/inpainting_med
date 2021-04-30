@@ -15,7 +15,7 @@ def generate_input_mask(shape, hole_size, hole_area=None, number_holes=1):
     output = masked tensor of shape (N, C, D, H, W) with holes (denoted with channel value 1)
     """
     mask = torch.zeros(shape)  # complete tensor, both covered and not
-    mask_batch_size, _, mask_d, mask_h, mask_w = mask.shape
+    mask_batch_size, _, mask_d, mask_h, mask_w = shape
 
     for i in range(mask_batch_size):
         for _ in range(number_holes):

@@ -4,7 +4,7 @@ definition of the COMPLETION NETWORK (fully CNN) that compose the architecture
 import torch.nn as nn
 
 
-in_channels = 4  # number of channels of the input
+in_channels = 4 + 1 # number of channels of the input + channel of the mask
 out_channels = in_channels - 1  # same channels of the input except for the mask channel
 
 
@@ -72,11 +72,11 @@ class CompletionN(nn.Module):
         self.bn15 = nn.BatchNorm3d(64)
         self.af15 = nn.ReLU()
 
-        self.conv16 = nn.Conv3d(64, 32, kernel_size=3, stride=1, padding=1)
+        self.conv16 = nn.Conv3d(64, 32, kernel_size=4, stride=1, padding=2)
         self.bn16 = nn.BatchNorm3d(32)
         self.af16 = nn.ReLU()
 
-        self.conv17 = nn.Conv3d(32, out_channels, kernel_size=3, stride=1, padding=1)
+        self.conv17 = nn.Conv3d(32, out_channels, kernel_size=6, stride=1, padding=2)
         self.af17 = nn.Sigmoid()
 
     def forward(self, x):
@@ -96,5 +96,5 @@ class CompletionN(nn.Module):
         x = self.bn14(self.af14(self.conv14(x)))
         x = self.bn15(self.af15(self.deconv15(x)))
         x = self.bn16(self.af16(self.conv16(x)))
-        x = self.act17(self.conv17(x))
+        x = self.af17(self.conv17(x))
         return x

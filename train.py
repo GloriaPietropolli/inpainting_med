@@ -13,12 +13,13 @@ from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
 from utils import generate_input_mask, generate_hole_area, crop
+from get_dataset import list_float_tensor
 
-num_channel = 4
+num_channel = 4  # 0,1,2,3
 
 path = 'result/'  # result directory
-train_dataset = [torch.zeros(1, num_channel, 1, 1)]
-test_dataset = [torch.zeros(1, num_channel, 1)]
+train_dataset = list_float_tensor
+# test_dataset = [torch.zeros(1, num_channel, 1)]
 
 # compute the mean of the channel of the training set
 mean_value_pixel = MV_pixel(train_dataset)
@@ -34,9 +35,9 @@ alpha = torch.tensor(alpha)
 epoch1 = 1000  # number of step for the first phase of training
 epoch2 = 1000  # number of step for the second phase of training
 epoch3 = 1000  # number of step for the third phase of training
-hole_min_d, hole_max_d = 10, 100
-hole_min_h, hole_max_h = 10, 100
-hole_min_w, hole_max_w = 10, 100
+hole_min_d, hole_max_d = 1, 10
+hole_min_h, hole_max_h = 1, 10
+hole_min_w, hole_max_w = 1, 10
 cn_input_size = 160
 ld_input_size = 96
 
@@ -53,7 +54,7 @@ for ep in range(epoch1):
         training_x_masked = training_x - training_x * mask + mean_value_pixel * mask  # mask the training tensor with
         # pixel containing the mean value
         input = torch.cat((training_x_masked, mask), dim=1)
-        output = model_completion(input)
+        output = model_completion(input.float())
 
         loss_completion = completion_network_loss(training_x, output, mask)  # MSE
 

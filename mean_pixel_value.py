@@ -9,9 +9,9 @@ import numpy as np
 
 
 def MV_pixel(train_dataset):
-    channel_total_mean = np.zeros(shape=(3,))
+    channel_total_mean = np.zeros(shape=(4,))
     for train_tensor in train_dataset:
-        tensor_mean = np.array(train_tensor.mean(axis=(1, 2, 3)))  # mean value of the different channel
+        tensor_mean = np.array(train_tensor.mean(axis=(0, 2, 3, 4)))  # mean value of the different channel
         channel_total_mean = channel_total_mean + tensor_mean
     channel_total_mean = channel_total_mean / len(train_dataset)
     return channel_total_mean

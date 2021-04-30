@@ -6,7 +6,8 @@ import netCDF4 as nc
 import numpy as np
 import pandas as pd
 import os
-from plot_tensor import plot_routine
+from plot_tensor import plot_routine, save_routine
+from hyperparameter import *
 
 constant_latitude = 111  # 1° of latitude corresponds to 111 km
 constant_longitude = 111  # 1° of latitude corresponds to 111 km
@@ -117,7 +118,7 @@ def insert_model_phys_values(year, lat_limits, lon_limits, depth_limits, year_li
     phys_files = os.listdir(path_phys)
 
     for model_file in phys_files:
-        file_phys = path_physl + model_file
+        file_phys = path_phys + model_file
         ds_phys = nc.Dataset(file_phys)
 
         time = model_file[4:12]
@@ -281,7 +282,7 @@ def insert_model_chl_values(year, lat_limits, lon_limits, depth_limits, year_lim
     return
 
 
-def insert_sat_values(lat_limits, lon_limits, depth_limits, resolution):
+def insert_sat_values(lat_limits, lon_limits, depth_limits, year_limits, resolution):
     """
     function that update the parallelepiped updating the voxel on the surfaces
     the only information provided is the 'CHL' ones
@@ -293,24 +294,26 @@ def insert_sat_values(lat_limits, lon_limits, depth_limits, resolution):
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
     depth_min, depth_max = depth_limits
+    year_min, year_max = year_limits
     w_res, h_res, d_res = resolution
 
     w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1)
     h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
     d = np.int((depth_max - depth_min) / d_res + 1)
 
-    path_sat = os.getcwd() + "/WEEKLY_1_1km/"
+    path_sat = os.getcwd() + "/WEEKLY_1_24/"
     sat_measurement = os.listdir(path_sat)
 
     for sat_file in sat_measurement:
         file = path_sat + sat_file
         ds = nc.Dataset(file)
 
-        data_time = sat_file[0:8]
-        data_time = read_date_time_sat(data_time)
-        if data_time < 2015.01:
+        datatime = sat_file[0:8]
+        time = read_date_time_sat(datatime)
+        if not year_min < time < year_max:
+            print('time out of range', time)
             continue
-        index = list_data_time.index(data_time)  # index input tens considered, i.e. the one to upd
+        index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
         select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
 
         latitude_list = ds['lat'][:].data
@@ -336,18 +339,20 @@ def insert_sat_values(lat_limits, lon_limits, depth_limits, resolution):
     return
 
 
-def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
+def insert_float_values(lat_limits, lon_limits, depth_limits, year_limits, resolution):
     """
     Function that update the parallelepiped updating the voxel where the float info is available
     lat_limits = (lat_min, lat_max)
     lon_limits = (lon_min, lon_max)
     depth_limits = (depth_min, depth_max) in km
+    year_limits = (year_min, year_max)
     resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
     """
     set_measurement = set()
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
     depth_min, depth_max = depth_limits
+    year_min, year_max = year_limits
     w_res, h_res, d_res = resolution
 
     w = np.int((lat_max - lat_min) * constant_latitude / w_res + 1)
@@ -366,10 +371,9 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
         for var in ds.variables:
             var_list.append(var)
 
-        # time = read_date_time_float(ds['DATE_CREATION'][:].data)  # 2015.22
         datetime = list_datetime[i]
         time = read_date_time_sat(datetime)
-        if not 2020 > time > 2015:
+        if not year_min < time < year_max:
             print('time out of range', time)
             continue
         index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
@@ -405,59 +409,31 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, resolution):
                         if not -3 < temp_v < 40:
                             print('invalid temperature found', temp_v)
                         else:
-                            select_parallelepiped[0, 0, depth_index, lon_index, lat_index] = float(temp_v)  # update
-                            # first channel
+                            select_parallelepiped[0, 0, depth_index, lon_index, lat_index] = float(temp_v)
 
                         if not 2 < salinity_v < 41:
                             print('invalid psal found', salinity_v)
                         else:
-                            select_parallelepiped[0, 1, depth_index, lon_index, lat_index] = float(
-                                salinity_v)  # update second channel
+                            select_parallelepiped[0, 1, depth_index, lon_index, lat_index] = float(salinity_v)
 
                         if not -5 < doxy_v < 600:
                             print('invalid doxy found', doxy_v)
-                            select_parallelepiped[0, 2, depth_index, lon_index, lat_index] = float(doxy_v)  # update
-                            # third channel
-
+                            select_parallelepiped[0, 2, depth_index, lon_index, lat_index] = float(doxy_v)
                         set_measurement.add(time)
 
     return set_measurement
 
 
-def save_result(tensor_list, dir):
-    if dir == 'empty':
-        path = os.getcwd() + '/result/empty'
-    if dir == 'float':
-        path = os.getcwd() + '/result/float'
-    if dir == 'sat':
-        path = os.getcwd() + '/result/sat'
-    if dir == 'mod':
-        path = os.getcwd() + '/result/mod'
-    else:
-        print('not saving ')
-        # return
-    for i in range(len(tensor_list)):
-        date_time = list_data_time[i]
-        np.savetxt('tens_' + str(date_time) + '.csv', tensor_list[i], delimiter=',')
-
-
-batch = 1
-number_channel = 4  # 1: temp, 2:salinity, 3:doxy, 4: chla
-latitude_interval = (36, 44)
-longitude_interval = (2, 9)
-depth_interval = (1, 200)
-year_interval = (2015, 2016)
-resolution = (12, 12, 50)
-
-list_data_time = create_list_date_time((2015, 2022))
+list_data_time = create_list_date_time(year_interval)
 list_parallelepiped = [
     create_box(batch, number_channel, latitude_interval, longitude_interval, depth_interval, resolution) for i in
     range(len(list_data_time))]
 
-# set_measurement = insert_float_values(latitude_interval, longitude_interval, depth_interval, resolution)
-# insert_sat_values(latitude_interval, longitude_interval, depth_interval, resolution)
-insert_model_doxy_values(2015, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
-channels = [2]
-plot_routine('model2015', list_parallelepiped, list_data_time, channels, year_interval)
+if kindof == 'float':
+    insert_float_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+
+# insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+# insert_model_doxy_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+save_routine(kindof, list_parallelepiped, list_data_time, year_interval)
 
 # save_result(list_parallelepiped, 'empty')
