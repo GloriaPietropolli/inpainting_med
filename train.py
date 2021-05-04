@@ -18,7 +18,7 @@ from get_dataset import list_float_tensor
 num_channel = 4  # 0,1,2,3
 
 path = 'result/'  # result directory
-train_dataset = list_float_tensor
+train_dataset = list_float_tensor[0:3]
 # test_dataset = [torch.zeros(1, num_channel, 1)]
 
 # compute the mean of the channel of the training set
@@ -32,14 +32,14 @@ alpha = 4e-4
 lr_c = 1e-3
 lr_d = 1e-3
 alpha = torch.tensor(alpha)
-epoch1 = 1000  # number of step for the first phase of training
-epoch2 = 1000  # number of step for the second phase of training
-epoch3 = 1000  # number of step for the third phase of training
+epoch1 = 1  # number of step for the first phase of training
+epoch2 = 1  # number of step for the second phase of training
+epoch3 = 1  # number of step for the third phase of training
 hole_min_d, hole_max_d = 1, 10
 hole_min_h, hole_max_h = 1, 10
 hole_min_w, hole_max_w = 1, 10
-cn_input_size = 160
-ld_input_size = 96
+cn_input_size = (30, 65, 75)
+ld_input_size = (15, 40, 40)
 
 # PHASE 1
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
@@ -56,9 +56,12 @@ for ep in range(epoch1):
         input = torch.cat((training_x_masked, mask), dim=1)
         output = model_completion(input.float())
 
+        output = output[:, :, :, :-1, :]
+        output = torch.cat((output, torch.zeros(1, 4, 30, 65, 1)), -1)
+
         loss_completion = completion_network_loss(training_x, output, mask)  # MSE
 
-        print(f"[PHASE1 : EPOCH]: {ep}, [LOSS]: {loss_completion.item():.6f}")
+        print(f"[PHASE1 : EPOCH]: {ep + 1}, [LOSS]: {loss_completion.item():.6f}")
         display.clear_output(wait=True)
 
         optimizer_completion.zero_grad()
@@ -68,15 +71,15 @@ for ep in range(epoch1):
 # PHASE 2
 # COMPLETION NETWORK is FIXED and DISCRIMINATORS are trained form scratch for T_d (=epoch2) iterations
 
-model_discriminator = Discriminator(loc_input_shape=(num_channel, ld_input_size, ld_input_size, ld_input_size),
-                                    glo_input_shape=(num_channel, cn_input_size, cn_input_size, cn_input_size))
+model_discriminator = Discriminator(loc_input_shape=(num_channel,) + ld_input_size,
+                                    glo_input_shape=(num_channel,) + cn_input_size)
 optimizer_discriminator = Adam(model_discriminator.parameters(), lr=lr_d)
 loss_discriminator = nn.BCELoss()
 for ep in range(epoch2):
     for training_x in train_dataset:
         # fake forward
-        hole_area_fake = generate_hole_area((ld_input_size, ld_input_size, ld_input_size),
-                                            (training_x[4], training_x[3], training_x[2]))
+        hole_area_fake = generate_hole_area(ld_input_size,
+                                            (training_x.shape[2], training_x.shape[3], training_x.shape[4]))
         mask = generate_input_mask(
             shape=(training_x.shape[0], 1, training_x.shape[2], training_x.shape[3], training_x.shape[4]),
             hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
@@ -84,15 +87,15 @@ for ep in range(epoch2):
         fake = torch.zeros((len(training_x), 1))
         training_x_masked = training_x - training_x * mask + mean_value_pixel * mask  # mask the training tensor with
         input_completion = torch.cat((training_x_masked, mask), dim=1)
-        output_completion = model_completion(input_completion)
+        output_completion = model_completion(input_completion.float())
         input_global_discriminator_fake = output_completion.detach()
         input_local_discriminator_fake = crop(input_global_discriminator_fake, hole_area_fake)
         output_fake = model_discriminator((input_local_discriminator_fake, input_global_discriminator_fake))
         loss_fake = loss_discriminator(output_fake, fake)
 
         # real forward
-        hole_area_real = generate_hole_area((ld_input_size, ld_input_size, ld_input_size),
-                                            (training_x[4], training_x[3], training_x[2]))
+        hole_area_real = generate_hole_area(ld_input_size,
+                                            (training_x.shape[2], training_x.shape[3], training_x.shape[4]))
         real = torch.ones((len(training_x), 1))
         input_global_discriminator_real = training_x
         input_local_discriminator_real = crop(training_x, hole_area_real)
@@ -101,7 +104,7 @@ for ep in range(epoch2):
 
         loss = (loss_real + loss_fake) / 2.0
 
-        print(f"[PHASE2 : EPOCH]: {ep}, [LOSS]: {loss.item():.6f}")
+        print(f"[PHASE2 : EPOCH]: {ep + 1}, [LOSS]: {loss.item():.6f}")
         display.clear_output(wait=True)
 
         loss.backward()
@@ -114,8 +117,8 @@ for ep in range(epoch2):
 for ep in range(epoch3):
     for training_x in train_dataset:
         # fake forward
-        hole_area_fake = generate_hole_area((ld_input_size, ld_input_size, ld_input_size),
-                                            (training_x[4], training_x[3], training_x[2]))
+        hole_area_fake = generate_hole_area(ld_input_size,
+                                            (training_x.shape[2], training_x.shape[3], training_x.shape[4]))
         mask = generate_input_mask(
             shape=(training_x.shape[0], 1, training_x.shape[2], training_x.shape[3], training_x.shape[4]),
             hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
@@ -123,15 +126,19 @@ for ep in range(epoch3):
         fake = torch.zeros((len(training_x), 1))
         training_x_masked = training_x - training_x * mask + mean_value_pixel * mask
         input_completion = torch.cat((training_x_masked, mask), dim=1)
-        output_completion = model_completion(input_completion)
+        output_completion = model_completion(input_completion.float())
+
+        output_completion = output_completion[:, :, :, :-1, :]
+        output_completion = torch.cat((output_completion, torch.zeros(1, 4, 30, 65, 1)), -1)
+
         input_global_discriminator_fake = output_completion.detach()
         input_local_discriminator_fake = crop(input_global_discriminator_fake, hole_area_fake)
         output_fake = model_discriminator((input_local_discriminator_fake, input_global_discriminator_fake))
         loss_fake = loss_discriminator(output_fake, fake)
 
         # real forward
-        hole_area_real = generate_hole_area((ld_input_size, ld_input_size, ld_input_size),
-                                            (training_x[4], training_x[3], training_x[2]))
+        hole_area_real = generate_hole_area(ld_input_size,
+                                            (training_x.shape[2], training_x.shape[3], training_x.shape[4]))
         real = torch.ones((len(training_x), 1))
         input_global_discriminator_real = training_x
         input_local_discriminator_real = crop(training_x, hole_area_real)
@@ -141,7 +148,7 @@ for ep in range(epoch3):
         loss_d = (loss_real + loss_fake) * alpha / 2.0
 
         # backward discriminator
-        loss.backward()
+        loss_d.backward()
         optimizer_discriminator.step()
         optimizer_discriminator.zero_grad()
 

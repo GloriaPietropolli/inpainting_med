@@ -431,9 +431,11 @@ list_parallelepiped = [
 
 if kindof == 'float':
     insert_float_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+if kindof == 'model2015':
+    insert_model_phys_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    insert_model_chl_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    insert_model_doxy_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+if kindof == 'sat':
+    insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
 
-# insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
-# insert_model_doxy_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
 save_routine(kindof, list_parallelepiped, list_data_time, year_interval)
-
-# save_result(list_parallelepiped, 'empty')

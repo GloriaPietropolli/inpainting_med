@@ -40,7 +40,8 @@ class LocDiscriminator(nn.Module):
         self.bn5 = nn.BatchNorm3d(512)
         self.af5 = nn.ReLU()
 
-        input_linear_layer = 512 * (self.height // 32) * (self.width // 32) * (self.depth // 32)
+        input_linear_layer = 32 * (self.height // 5) * (self.width // 5) * (self.depth // 8)
+        # sto cambiando per cosa divido self-h, self.w e self.d controlla articolo se i nmeri posso sceglirli come vgl
         self.linear = nn.Linear(input_linear_layer, 1024)
         self.af_final = nn.ReLU()
         self.flatten = Flatten()
@@ -89,7 +90,7 @@ class GloDiscriminator(nn.Module):
         self.bn6 = nn.BatchNorm3d(512)
         self.af6 = nn.ReLU()
 
-        input_linear_layer = 512 * (self.height // 64) * (self.width // 64) * (self.depth // 64)
+        input_linear_layer = 8 * (self.height // 8) * (self.width // 9) * (self.depth // 7)
         self.flatten = Flatten()
         self.linear = nn.Linear(input_linear_layer, 1024)
         self.af_final = nn.ReLU()

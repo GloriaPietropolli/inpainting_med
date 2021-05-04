@@ -10,6 +10,6 @@ depth_interval = (1, 600)
 year_interval = (2015, 2016)
 year = 2015
 resolution = (12, 12, 20)
-kindof = 'float'
+kindof = 'model2015'
 channels = [3]  # useful only in the plot routine
 

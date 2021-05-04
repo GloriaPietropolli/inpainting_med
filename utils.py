@@ -40,11 +40,11 @@ def generate_input_mask(shape, hole_size, hole_area=None, number_holes=1):
 
 def generate_hole_area(size, mask_size):
     """
-    total_size = total size of the area (W,H,D)
+    total_size = total size of the area (D,H,W)
     mask_size = size of the input mask
     """
-    mask_w, mask_h, mask_d = mask_size
-    area_w, area_h, area_d = size
+    mask_d, mask_h, mask_w = mask_size
+    area_d, area_h, area_w = size
     offset_x = random.randint(0, mask_w - area_w)
     offset_y = random.randint(0, mask_h - area_h)
     offset_z = random.randint(0, mask_d - area_d)

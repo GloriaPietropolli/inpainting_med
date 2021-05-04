@@ -56,7 +56,7 @@ class CompletionN(nn.Module):
         self.bn11 = nn.BatchNorm3d(256)
         self.af11 = nn.ReLU()
 
-        self.conv12 = nn.Conv3d(256, 256, kernel_size=3, stride=1, padding=1)
+        self.conv12 = nn.Conv3d(256, 256, kernel_size=4, stride=1, padding=1)
         self.bn12 = nn.BatchNorm3d(256)
         self.af12 = nn.ReLU()
 
@@ -64,7 +64,7 @@ class CompletionN(nn.Module):
         self.bn13 = nn.BatchNorm3d(128)
         self.af13 = nn.ReLU()
 
-        self.conv14 = nn.Conv3d(128, 128, kernel_size=3, stride=1, padding=1)
+        self.conv14 = nn.Conv3d(128, 128, kernel_size=4, stride=1, padding=1)
         self.bn14 = nn.BatchNorm3d(128)
         self.af14 = nn.ReLU()
 
@@ -76,7 +76,7 @@ class CompletionN(nn.Module):
         self.bn16 = nn.BatchNorm3d(32)
         self.af16 = nn.ReLU()
 
-        self.conv17 = nn.Conv3d(32, out_channels, kernel_size=6, stride=1, padding=2)
+        self.conv17 = nn.Conv3d(32, out_channels, kernel_size=2, stride=1, padding=2)
         self.af17 = nn.Sigmoid()
 
     def forward(self, x):
