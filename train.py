@@ -4,7 +4,6 @@ Implementation of the training routine for the 3D CNN with GAN
 - train_dataset : list/array of 4D (or 5D ?) tensor in form (bs, input_channels, D_in, H_in, W_in)
 """
 
-import torch
 import torch.nn as nn
 from torch.optim import Adam
 from IPython import display
@@ -13,28 +12,31 @@ from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
 from utils import generate_input_mask, generate_hole_area, crop
-from get_dataset import list_float_tensor
+from get_dataset import *
 
 num_channel = 4  # 0,1,2,3
 
 path = 'result/'  # result directory
-train_dataset = list_float_tensor[0:3]
-# test_dataset = [torch.zeros(1, num_channel, 1)]
 
-# compute the mean of the channel of the training set
-mean_value_pixel = MV_pixel(train_dataset)
+if kindof == 'float':
+    train_dataset = list_float_tensor
+if kindof == 'model2015':
+    train_dataset = list_model_tensor
+if kindof == 'sat':
+    train_dataset = list_sat_tensor
 
-# transform the mean_value_pixel (an array of length 3) into a tensor of the same shape as the input's ones
-mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))
+mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
+mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))  # transform the mean_value_pixel
+# (an array of length 3) into a tensor of the same shape as the input's ones
 
 # definitions of the hyperparameters
 alpha = 4e-4
 lr_c = 1e-3
 lr_d = 1e-3
 alpha = torch.tensor(alpha)
-epoch1 = 1  # number of step for the first phase of training
-epoch2 = 1  # number of step for the second phase of training
-epoch3 = 1  # number of step for the third phase of training
+epoch1 = 50  # number of step for the first phase of training
+epoch2 = 50  # number of step for the second phase of training
+epoch3 = 50  # number of step for the third phase of training
 hole_min_d, hole_max_d = 1, 10
 hole_min_h, hole_max_h = 1, 10
 hole_min_w, hole_max_w = 1, 10
@@ -61,7 +63,7 @@ for ep in range(epoch1):
 
         loss_completion = completion_network_loss(training_x, output, mask)  # MSE
 
-        print(f"[PHASE1 : EPOCH]: {ep + 1}, [LOSS]: {loss_completion.item():.6f}")
+        print(f"[PHASE1 : EPOCH]: {ep + 1}, [LOSS]: {loss_completion.item():.12f}")
         display.clear_output(wait=True)
 
         optimizer_completion.zero_grad()
@@ -104,7 +106,7 @@ for ep in range(epoch2):
 
         loss = (loss_real + loss_fake) / 2.0
 
-        print(f"[PHASE2 : EPOCH]: {ep + 1}, [LOSS]: {loss.item():.6f}")
+        print(f"[PHASE2 : EPOCH]: {ep + 1}, [LOSS]: {loss.item():.12f}")
         display.clear_output(wait=True)
 
         loss.backward()
@@ -167,5 +169,5 @@ for ep in range(epoch3):
         optimizer_completion.zero_grad()
 
         print(
-            f"[PHASE3 : EPOCH]: {ep}, [LOSS COMPLETION]: {loss_c.item():.6f}, [LOSS DISCRIMINATOR]: {loss_d.item():.6f}")
+            f"[PHASE3 : EPOCH]: {ep}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f}")
         display.clear_output(wait=True)

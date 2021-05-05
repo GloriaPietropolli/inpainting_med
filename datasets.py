@@ -433,9 +433,13 @@ if kindof == 'float':
     insert_float_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
 if kindof == 'model2015':
     insert_model_phys_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    print('phys value inserted')
     insert_model_chl_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    print('chl value inserted')
     insert_model_doxy_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    print('doxy value inserted')
 if kindof == 'sat':
     insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)
 
 save_routine(kindof, list_parallelepiped, list_data_time, year_interval)
