@@ -3,20 +3,21 @@ Implementation of the training routine for the 3D CNN with GAN
 
 - train_dataset : list/array of 4D (or 5D ?) tensor in form (bs, input_channels, D_in, H_in, W_in)
 """
-
+import random
 import torch.nn as nn
 from torch.optim import Adam
+import matplotlib.pyplot as plt
 from IPython import display
 from discriminator import Discriminator
 from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
-from utils import generate_input_mask, generate_hole_area, crop
+from utils import generate_input_mask, generate_hole_area, crop, sample_random_batch
 from get_dataset import *
 
 num_channel = 4  # 0,1,2,3
 
-path = 'result/'  # result directory
+path = 'result/' + kindof  # result directory
 
 if kindof == 'float':
     train_dataset = list_float_tensor
@@ -34,7 +35,9 @@ alpha = 4e-4
 lr_c = 1e-3
 lr_d = 1e-3
 alpha = torch.tensor(alpha)
+num_test_completions = 10
 epoch1 = 50  # number of step for the first phase of training
+snaperiod_1 = 10
 epoch2 = 50  # number of step for the second phase of training
 epoch3 = 50  # number of step for the third phase of training
 hole_min_d, hole_max_d = 1, 10
@@ -69,6 +72,44 @@ for ep in range(epoch1):
         optimizer_completion.zero_grad()
         loss_completion.backward()
         optimizer_completion.step()
+
+        # test
+        if ep % snaperiod_1 == 0:
+            model_completion.eval()
+            with torch.no_grad():
+                testing_x = random.choice(train_dataset)
+                training_mask = generate_input_mask(
+                    shape=(testing_x.shape[0], 1, testing_x.shape[2], testing_x.shape[3], testing_x.shape[4]),
+                    hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
+                    hole_area=generate_hole_area(ld_input_size, (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
+                testing_x_mask = testing_x - testing_x * mask + mean_value_pixel * mask
+                testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
+                testing_output = model_completion(testing_input.float())
+
+                path_tensor_phase1 = path + '/phase1/tensor/'
+                path_fig_phase1 = path + '/phase1/fig/'
+
+                path_tensor_epoch = path_tensor_phase1 + 'epoch_' + str(ep)
+                if not os.path.exists(path_tensor_epoch):
+                    os.mkdir(path_tensor_epoch)
+                torch.save(testing_output, path_tensor_epoch + "/tensor_phase1" + ".pt")
+
+                path_fig_epoch = path_fig_phase1 + 'epoch_' + str(ep)
+                if not os.path.exists(path_fig_epoch):
+                    os.mkdir(path_fig_epoch)
+
+                number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
+
+                for channel in channels:
+                    for i in range(number_fig):
+                        path_fig_channel = path_fig_epoch + '/' + str(channel)
+                        if not os.path.exists(path_fig_channel):
+                            os.mkdir(path_fig_channel)
+                        cmap = plt.get_cmap('Greens')
+                        plt.imshow(testing_output[0, channel, i, :, :], cmap=cmap)
+                        plt.colorbar()
+                        plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
+                        plt.close()
 
 # PHASE 2
 # COMPLETION NETWORK is FIXED and DISCRIMINATORS are trained form scratch for T_d (=epoch2) iterations

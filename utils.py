@@ -61,3 +61,22 @@ def crop(x, area):
     cropped_tensor = x[:, :, z_left_corner:z_left_corner + d, y_left_corner:y_left_corner + h,
                        x_left_corner:x_left_corner + w]
     return cropped_tensor
+
+
+def sample_random_batch(dataset, batch_size=32):
+    """
+    * inputs:
+        - dataset (torch.utils.data.Dataset, required)
+                An instance of torch.utils.data.Dataset.
+        - batch_size (int, optional)
+                Batch size.
+    * returns:
+            A mini-batch randomly sampled from the input dataset.
+    """
+    num_samples = len(dataset)
+    batch = []
+    for _ in range(min(batch_size, num_samples)):
+        index = random.choice(range(0, num_samples))
+        x = torch.unsqueeze(dataset[index], dim=0)
+        batch.append(x)
+    return torch.cat(batch, dim=0)
