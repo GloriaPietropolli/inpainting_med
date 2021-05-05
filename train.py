@@ -40,11 +40,11 @@ epoch1 = 50  # number of step for the first phase of training
 snaperiod_1 = 10
 epoch2 = 50  # number of step for the second phase of training
 epoch3 = 50  # number of step for the third phase of training
-hole_min_d, hole_max_d = 1, 10
-hole_min_h, hole_max_h = 1, 10
-hole_min_w, hole_max_w = 1, 10
+hole_min_d, hole_max_d = 10, 20
+hole_min_h, hole_max_h = 30, 50
+hole_min_w, hole_max_w = 30, 50
 cn_input_size = (30, 65, 75)
-ld_input_size = (15, 40, 40)
+ld_input_size = (20, 50, 50)
 
 # PHASE 1
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
@@ -210,5 +210,5 @@ for ep in range(epoch3):
         optimizer_completion.zero_grad()
 
         print(
-            f"[PHASE3 : EPOCH]: {ep}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f}")
+            f"[PHASE3 : EPOCH]: {ep + 1}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f}")
         display.clear_output(wait=True)
