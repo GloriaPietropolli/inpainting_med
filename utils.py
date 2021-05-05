@@ -35,7 +35,7 @@ def generate_input_mask(shape, hole_size, hole_area=None, number_holes=1):
             offset_z = random.randint(0, mask_d - hole_d)
 
         mask[i, :, offset_z:offset_z + hole_d, offset_y:offset_y + hole_h, offset_x:offset_x + hole_w] = 1.0
-        return mask
+    return mask
 
 
 def generate_hole_area(size, mask_size):
