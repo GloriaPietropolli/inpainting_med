@@ -441,5 +441,8 @@ if kindof == 'model2015':
 if kindof == 'sat':
     insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)
+if kindof == 'flat_sat':
+    insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)
 
 save_routine(kindof, list_parallelepiped, list_data_time, year_interval)

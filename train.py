@@ -13,9 +13,10 @@ from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
 from utils import generate_input_mask, generate_hole_area, crop, sample_random_batch
+from dumb_list import *
 from get_dataset import *
 
-num_channel = 4  # 0,1,2,3
+num_channel = number_channel  # 0,1,2,3
 
 path = 'result/' + kindof  # result directory
 
@@ -25,6 +26,8 @@ if kindof == 'model2015':
     train_dataset = list_model_tensor
 if kindof == 'sat':
     train_dataset = list_sat_tensor
+if dumb_list:
+    train_dataset = dumb_dataset
 
 mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))  # transform the mean_value_pixel
@@ -37,14 +40,14 @@ lr_d = 1e-3
 alpha = torch.tensor(alpha)
 num_test_completions = 10
 epoch1 = 50  # number of step for the first phase of training
-snaperiod_1 = 10
+snaperiod_1 = 1
 epoch2 = 50  # number of step for the second phase of training
 epoch3 = 50  # number of step for the third phase of training
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
 cn_input_size = (30, 65, 75)
-ld_input_size = (20, 50, 50)
+ld_input_size = (30, 50, 50)
 
 # PHASE 1
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
@@ -61,9 +64,6 @@ for ep in range(epoch1):
         input = torch.cat((training_x_masked, mask), dim=1)
         output = model_completion(input.float())
 
-        output = output[:, :, :, :-1, :]
-        output = torch.cat((output, torch.zeros(1, 4, 30, 65, 1)), -1)
-
         loss_completion = completion_network_loss(training_x, output, mask)  # MSE
 
         print(f"[PHASE1 : EPOCH]: {ep + 1}, [LOSS]: {loss_completion.item():.12f}")
@@ -73,43 +73,44 @@ for ep in range(epoch1):
         loss_completion.backward()
         optimizer_completion.step()
 
-        # test
-        if ep % snaperiod_1 == 0:
-            model_completion.eval()
-            with torch.no_grad():
-                testing_x = random.choice(train_dataset)
-                training_mask = generate_input_mask(
-                    shape=(testing_x.shape[0], 1, testing_x.shape[2], testing_x.shape[3], testing_x.shape[4]),
-                    hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
-                    hole_area=generate_hole_area(ld_input_size, (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
-                testing_x_mask = testing_x - testing_x * mask + mean_value_pixel * mask
-                testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
-                testing_output = model_completion(testing_input.float())
+    # test
+    if ep % snaperiod_1 == 0:
+        model_completion.eval()
+        with torch.no_grad():
+            testing_x = random.choice(train_dataset)
+            training_mask = generate_input_mask(
+                shape=(testing_x.shape[0], 1, testing_x.shape[2], testing_x.shape[3], testing_x.shape[4]),
+                hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
+                hole_area=generate_hole_area(ld_input_size,
+                                             (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
+            testing_x_mask = testing_x - testing_x * mask + mean_value_pixel * mask
+            testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
+            testing_output = model_completion(testing_input.float())
 
-                path_tensor_phase1 = path + '/phase1/tensor/'
-                path_fig_phase1 = path + '/phase1/fig/'
+            path_tensor_phase1 = path + '/phase1/tensor/'
+            path_fig_phase1 = path + '/phase1/fig/'
 
-                path_tensor_epoch = path_tensor_phase1 + 'epoch_' + str(ep)
-                if not os.path.exists(path_tensor_epoch):
-                    os.mkdir(path_tensor_epoch)
-                torch.save(testing_output, path_tensor_epoch + "/tensor_phase1" + ".pt")
+            path_tensor_epoch = path_tensor_phase1 + 'epoch_' + str(ep)
+            if not os.path.exists(path_tensor_epoch):
+                os.mkdir(path_tensor_epoch)
+            torch.save(testing_output, path_tensor_epoch + "/tensor_phase1" + ".pt")
 
-                path_fig_epoch = path_fig_phase1 + 'epoch_' + str(ep)
-                if not os.path.exists(path_fig_epoch):
-                    os.mkdir(path_fig_epoch)
+            path_fig_epoch = path_fig_phase1 + 'epoch_' + str(ep)
+            if not os.path.exists(path_fig_epoch):
+                os.mkdir(path_fig_epoch)
 
-                number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
+            number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
 
-                for channel in channels:
-                    for i in range(number_fig):
-                        path_fig_channel = path_fig_epoch + '/' + str(channel)
-                        if not os.path.exists(path_fig_channel):
-                            os.mkdir(path_fig_channel)
-                        cmap = plt.get_cmap('Greens')
-                        plt.imshow(testing_output[0, channel, i, :, :], cmap=cmap)
-                        plt.colorbar()
-                        plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
-                        plt.close()
+            for channel in channels:
+                for i in range(number_fig):
+                    path_fig_channel = path_fig_epoch + '/' + str(channel)
+                    if not os.path.exists(path_fig_channel):
+                        os.mkdir(path_fig_channel)
+                    cmap = plt.get_cmap('Greens')
+                    plt.imshow(testing_output[0, channel, i, :, :], cmap=cmap)
+                    plt.colorbar()
+                    plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
+                    plt.close()
 
 # PHASE 2
 # COMPLETION NETWORK is FIXED and DISCRIMINATORS are trained form scratch for T_d (=epoch2) iterations
@@ -212,3 +213,42 @@ for ep in range(epoch3):
         print(
             f"[PHASE3 : EPOCH]: {ep + 1}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f}")
         display.clear_output(wait=True)
+
+        # test
+        if ep % snaperiod_1 == 0:
+            model_completion.eval()
+            with torch.no_grad():
+                testing_x = random.choice(train_dataset)
+                training_mask = generate_input_mask(
+                    shape=(testing_x.shape[0], 1, testing_x.shape[2], testing_x.shape[3], testing_x.shape[4]),
+                    hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
+                    hole_area=generate_hole_area(ld_input_size,
+                                                 (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
+                testing_x_mask = testing_x - testing_x * mask + mean_value_pixel * mask
+                testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
+                testing_output = model_completion(testing_input.float())
+
+                path_tensor_phase1 = path + '/phase3/tensor/'
+                path_fig_phase1 = path + '/phase3/fig/'
+
+                path_tensor_epoch = path_tensor_phase1 + 'epoch_' + str(ep)
+                if not os.path.exists(path_tensor_epoch):
+                    os.mkdir(path_tensor_epoch)
+                torch.save(testing_output, path_tensor_epoch + "/tensor_phase1" + ".pt")
+
+                path_fig_epoch = path_fig_phase1 + 'epoch_' + str(ep)
+                if not os.path.exists(path_fig_epoch):
+                    os.mkdir(path_fig_epoch)
+
+                number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
+
+                for channel in channels:
+                    for i in range(number_fig):
+                        path_fig_channel = path_fig_epoch + '/' + str(channel)
+                        if not os.path.exists(path_fig_channel):
+                            os.mkdir(path_fig_channel)
+                        cmap = plt.get_cmap('Greens')
+                        plt.imshow(testing_output[0, channel, i, :, :], cmap=cmap)
+                        plt.colorbar()
+                        plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
+                        plt.close()
