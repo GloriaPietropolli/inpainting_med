@@ -5,7 +5,7 @@ Implementation of the training routine for the 3D CNN with GAN
 """
 import random
 import torch.nn as nn
-from torch.optim import Adam
+from torch.optim import Adadelta
 import matplotlib.pyplot as plt
 from IPython import display
 from discriminator import Discriminator
@@ -13,6 +13,7 @@ from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
 from utils import generate_input_mask, generate_hole_area, crop, sample_random_batch
+from normalization import Normalization
 from dumb_list import *
 from get_dataset import *
 
@@ -28,6 +29,8 @@ if kindof == 'sat':
     train_dataset = list_sat_tensor
 if dumb_list:
     train_dataset = dumb_dataset
+
+train_dataset = Normalization(train_dataset)
 
 mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))  # transform the mean_value_pixel
@@ -46,14 +49,14 @@ epoch3 = 50  # number of step for the third phase of training
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
-cn_input_size = (30, 65, 75)
-ld_input_size = (30, 50, 50)
+cn_input_size = (29, 65, 75)
+ld_input_size = (29, 50, 50)
 
 # PHASE 1
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
 
 model_completion = CompletionN()
-optimizer_completion = Adam(model_completion.parameters(), lr=lr_c)
+optimizer_completion = Adadelta(model_completion.parameters(), lr=lr_c)
 for ep in range(epoch1):
     for training_x in train_dataset:
         mask = generate_input_mask(
@@ -72,6 +75,7 @@ for ep in range(epoch1):
         optimizer_completion.zero_grad()
         loss_completion.backward()
         optimizer_completion.step()
+
 
     # test
     if ep % snaperiod_1 == 0:
@@ -117,7 +121,7 @@ for ep in range(epoch1):
 
 model_discriminator = Discriminator(loc_input_shape=(num_channel,) + ld_input_size,
                                     glo_input_shape=(num_channel,) + cn_input_size)
-optimizer_discriminator = Adam(model_discriminator.parameters(), lr=lr_d)
+optimizer_discriminator = Adadelta(model_discriminator.parameters(), lr=lr_d)
 loss_discriminator = nn.BCELoss()
 for ep in range(epoch2):
     for training_x in train_dataset:

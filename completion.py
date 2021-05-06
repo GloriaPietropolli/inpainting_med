@@ -81,7 +81,7 @@ class CompletionN(nn.Module):
             self.conv18 = nn.Conv3d(32, out_channels, kernel_size=(7, 7, 5), stride=1, padding=2)
             self.af18 = nn.ReLU()
         else:
-            self.conv17 = nn.Conv3d(32, out_channels, kernel_size=(2, 3, 1), stride=1, padding=2)
+            self.conv17 = nn.Conv3d(32, out_channels, kernel_size=(3, 3, 1), stride=1, padding=2)
             self.af17 = nn.ReLU()
 
     def forward(self, x):

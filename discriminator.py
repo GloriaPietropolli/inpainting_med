@@ -118,7 +118,7 @@ class Discriminator(nn.Module):
                              self.model_global_discriminator.output_shape[-1]
         self.concatenate = Concatenate(dim=-1)
         self.linear = nn.Linear(input_linear_layer, 1)
-        self.af = nn.Sigmoid()
+        self.af = nn.ReLU()
 
     def forward(self, x):
         x_local_discriminator, x_global_discriminator = x
