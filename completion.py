@@ -14,75 +14,75 @@ class CompletionN(nn.Module):
 
         self.conv1 = nn.Conv3d(in_channels, 64, kernel_size=5, stride=1, padding=2)
         self.bn1 = nn.BatchNorm3d(64)
-        self.af1 = nn.ReLU()
+        self.af1 = nn.SELU()
 
         self.conv2 = nn.Conv3d(64, 128, kernel_size=3, stride=2, padding=1)
         self.bn2 = nn.BatchNorm3d(128)
-        self.af2 = nn.ReLU()
+        self.af2 = nn.SELU()
 
         self.conv3 = nn.Conv3d(128, 128, kernel_size=3, stride=1, padding=1)
         self.bn3 = nn.BatchNorm3d(128)
-        self.af3 = nn.ReLU()
+        self.af3 = nn.SELU()
 
         self.conv4 = nn.Conv3d(128, 256, kernel_size=3, stride=2, padding=1)
         self.bn4 = nn.BatchNorm3d(256)
-        self.af4 = nn.ReLU()
+        self.af4 = nn.SELU()
 
         self.conv5 = nn.Conv3d(256, 256, kernel_size=3, stride=1, padding=1)
         self.bn5 = nn.BatchNorm3d(256)
-        self.af5 = nn.ReLU()
+        self.af5 = nn.SELU()
 
         self.conv6 = nn.Conv3d(256, 256, kernel_size=3, stride=1, padding=1)
         self.bn6 = nn.BatchNorm3d(256)
-        self.af6 = nn.ReLU()
+        self.af6 = nn.SELU()
 
         self.conv7 = nn.Conv3d(256, 256, kernel_size=3, stride=1, dilation=2, padding=2)
         self.bn7 = nn.BatchNorm3d(256)
-        self.af7 = nn.ReLU()
+        self.af7 = nn.SELU()
 
         self.conv8 = nn.Conv3d(256, 256, kernel_size=3, stride=1, dilation=4, padding=4)
         self.bn8 = nn.BatchNorm3d(256)
-        self.af8 = nn.ReLU()
+        self.af8 = nn.SELU()
 
         self.conv9 = nn.Conv3d(256, 256, kernel_size=3, stride=1, dilation=8, padding=8)
         self.bn9 = nn.BatchNorm3d(256)
-        self.af9 = nn.ReLU()
+        self.af9 = nn.SELU()
 
         self.conv10 = nn.Conv3d(256, 256, kernel_size=3, stride=1, dilation=16, padding=16)
         self.bn10 = nn.BatchNorm3d(256)
-        self.af10 = nn.ReLU()
+        self.af10 = nn.SELU()
 
         self.conv11 = nn.Conv3d(256, 256, kernel_size=3, stride=1, padding=1)
         self.bn11 = nn.BatchNorm3d(256)
-        self.af11 = nn.ReLU()
+        self.af11 = nn.SELU()
 
         if kindof != 'flat_sat':
             self.conv12 = nn.Conv3d(256, 256, kernel_size=4, stride=1, padding=1)
             self.bn12 = nn.BatchNorm3d(256)
-            self.af12 = nn.ReLU()
+            self.af12 = nn.SELU()
 
         self.deconv13 = nn.ConvTranspose3d(256, 128, kernel_size=4, stride=2, padding=1)
         self.bn13 = nn.BatchNorm3d(128)
-        self.af13 = nn.ReLU()
+        self.af13 = nn.SELU()
 
         self.conv14 = nn.Conv3d(128, 128, kernel_size=4, stride=1, padding=1)
         self.bn14 = nn.BatchNorm3d(128)
-        self.af14 = nn.ReLU()
+        self.af14 = nn.SELU()
 
         self.deconv15 = nn.ConvTranspose3d(128, 64, kernel_size=4, stride=2, padding=1)
         self.bn15 = nn.BatchNorm3d(64)
-        self.af15 = nn.ReLU()
+        self.af15 = nn.SELU()
 
         self.conv16 = nn.Conv3d(64, 32, kernel_size=4, stride=1, padding=2)
         self.bn16 = nn.BatchNorm3d(32)
-        self.af16 = nn.ReLU()
+        self.af16 = nn.SELU()
 
         if kindof == 'flat_sat':
             self.conv18 = nn.Conv3d(32, out_channels, kernel_size=(7, 7, 5), stride=1, padding=2)
-            self.af18 = nn.ReLU()
+            self.af18 = nn.SELU()
         else:
             self.conv17 = nn.Conv3d(32, out_channels, kernel_size=(3, 3, 1), stride=1, padding=2)
-            self.af17 = nn.ReLU()
+            self.af17 = nn.SELU()
 
     def forward(self, x):
         x = self.bn1(self.af1(self.conv1(x)))

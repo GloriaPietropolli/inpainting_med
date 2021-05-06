@@ -38,8 +38,8 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 1e-3
-lr_d = 1e-3
+lr_c = 0.01
+lr_d = 0.01
 alpha = torch.tensor(alpha)
 num_test_completions = 10
 epoch1 = 50  # number of step for the first phase of training
@@ -91,8 +91,8 @@ for ep in range(epoch1):
             testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
             testing_output = model_completion(testing_input.float())
 
-            path_tensor_phase1 = path + '/phase1/tensor/'
-            path_fig_phase1 = path + '/phase1/fig/'
+            path_tensor_phase1 = path + '/lr' + str(lr_c) + '/phase1/tensor/'
+            path_fig_phase1 = path + '/lr' + str(lr_c) + '/phase1/fig/'
 
             path_tensor_epoch = path_tensor_phase1 + 'epoch_' + str(ep)
             if not os.path.exists(path_tensor_epoch):
@@ -232,15 +232,15 @@ for ep in range(epoch3):
                 testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
                 testing_output = model_completion(testing_input.float())
 
-                path_tensor_phase1 = path + '/phase3/tensor/'
-                path_fig_phase1 = path + '/phase3/fig/'
+                path_tensor_phase3 = path + '/lr' + str(lr_c) + '/phase3/tensor/'
+                path_fig_phase3 = path + '/lr' + str(lr_c) + '/phase3/fig/'
 
-                path_tensor_epoch = path_tensor_phase1 + 'epoch_' + str(ep)
+                path_tensor_epoch = path_tensor_phase3 + 'epoch_' + str(ep)
                 if not os.path.exists(path_tensor_epoch):
                     os.mkdir(path_tensor_epoch)
-                torch.save(testing_output, path_tensor_epoch + "/tensor_phase1" + ".pt")
+                torch.save(testing_output, path_tensor_epoch + "/tensor_phase3" + ".pt")
 
-                path_fig_epoch = path_fig_phase1 + 'epoch_' + str(ep)
+                path_fig_epoch = path_fig_phase3 + 'epoch_' + str(ep)
                 if not os.path.exists(path_fig_epoch):
                     os.mkdir(path_fig_epoch)
 
