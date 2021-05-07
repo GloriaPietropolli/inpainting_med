@@ -13,7 +13,7 @@ from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
 from utils import generate_input_mask, generate_hole_area, crop
 from normalization import Normalization
-from plot_error import Plot_Error
+from plot_error import Plot_Error, Plot_Adversarial_Error
 from dumb_list import *
 from get_dataset import *
 
@@ -28,7 +28,7 @@ if kindof == 'model2015':
     train_dataset = list_model_tensor
 if kindof == 'sat':
     train_dataset = list_sat_tensor
-if dumb_list:
+if kindof == 'dumb':
     train_dataset = dumb_dataset
 
 train_dataset = Normalization(train_dataset)
@@ -39,19 +39,27 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.1
-lr_d = 0.001
+lr_c = 0.01
+lr_d = 0.01
 alpha = torch.tensor(alpha)
 num_test_completions = 10
-epoch1 = 50  # number of step for the first phase of training
+epoch1 = 1  # number of step for the first phase of training
 snaperiod_1 = 1
-epoch2 = 50  # number of step for the second phase of training
-epoch3 = 50 # number of step for the third phase of training
+epoch2 = 1  # number of step for the second phase of training
+epoch3 = 1 # number of step for the third phase of training
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
 cn_input_size = (29, 65, 73)
 ld_input_size = (20, 50, 50)
+
+# make directory
+path_configuration = path + '/' + str(epoch1) + 'ep1_' + str(epoch2) + 'ep2_' + str(epoch3) + 'ep3_'
+if not os.path.exists(path_configuration):
+    os.mkdir(path_configuration)
+path_lr = path_configuration + '/' + str(lr_c) + 'lrc_' + str(lr_d) + 'lrd_'
+if not os.path.exists(path_lr):
+    os.mkdir(path_lr)
 
 # losses vectors
 losses_1_c = []  # losses of the completion network during phase 1
@@ -64,6 +72,7 @@ losses_3_d = []  # losses of the discriminator network during phase 3
 
 model_completion = CompletionN()
 optimizer_completion = Adadelta(model_completion.parameters(), lr=lr_c)
+f = open(path_lr + "/phase1_losses.txt", "w+")
 for ep in range(epoch1):
     for training_x in train_dataset:
         mask = generate_input_mask(
@@ -79,6 +88,7 @@ for ep in range(epoch1):
 
         print(f"[PHASE1 : EPOCH]: {ep + 1}, [LOSS]: {loss_completion.item():.12f}")
         display.clear_output(wait=True)
+        f.write(f"[PHASE1 : EPOCH]: {ep + 1}, [LOSS]: {loss_completion.item():.12f} \n")
 
         optimizer_completion.zero_grad()
         loss_completion.backward()
@@ -98,15 +108,22 @@ for ep in range(epoch1):
             testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
             testing_output = model_completion(testing_input.float())
 
-            path_tensor_phase1 = path + '/lr' + str(lr_c) + '/phase1/tensor/'
-            path_fig_phase1 = path + '/lr' + str(lr_c) + '/phase1/fig/'
+            path_phase = path_lr + '/' + 'phase1'
+            if not os.path.exists(path_phase):
+                os.mkdir(path_phase)
+            path_tensor = path_phase + '/tensor/'
+            if not os.path.exists(path_tensor):
+                os.mkdir(path_tensor)
+            path_fig = path_phase + '/fig/'
+            if not os.path.exists(path_fig):
+                os.mkdir(path_fig)
 
-            path_tensor_epoch = path_tensor_phase1 + 'epoch_' + str(ep)
+            path_tensor_epoch = path_tensor + 'epoch_' + str(ep)
             if not os.path.exists(path_tensor_epoch):
                 os.mkdir(path_tensor_epoch)
             torch.save(testing_output, path_tensor_epoch + "/tensor_phase1" + ".pt")
 
-            path_fig_epoch = path_fig_phase1 + 'epoch_' + str(ep)
+            path_fig_epoch = path_fig + 'epoch_' + str(ep)
             if not os.path.exists(path_fig_epoch):
                 os.mkdir(path_fig_epoch)
 
@@ -123,7 +140,8 @@ for ep in range(epoch1):
                     plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
                     plt.close()
 
-Plot_Error(losses_1_c, '1c', path_fig_phase1)  # plot of the error in phase1
+f.close()
+Plot_Error(losses_1_c, '1c', path_lr + '/')  # plot of the error in phase1
 
 
 # PHASE 2
@@ -133,6 +151,7 @@ model_discriminator = Discriminator(loc_input_shape=(num_channel,) + ld_input_si
                                     glo_input_shape=(num_channel,) + cn_input_size)
 optimizer_discriminator = Adadelta(model_discriminator.parameters(), lr=lr_d)
 loss_discriminator = nn.BCELoss()
+f = open(path_lr + "/phase2_losses.txt", "w+")
 for ep in range(epoch2):
     for training_x in train_dataset:
         # fake forward
@@ -165,17 +184,19 @@ for ep in range(epoch2):
 
         print(f"[PHASE2 : EPOCH]: {ep + 1}, [LOSS]: {loss.item():.12f}")
         display.clear_output(wait=True)
+        f.write(f"[PHASE2 : EPOCH]: {ep + 1}, [LOSS]: {loss.item():.12f} \n")
 
         loss.backward()
         optimizer_discriminator.step()
         optimizer_discriminator.zero_grad()
 
-path_fig_phase2 = path + '/lr' + str(lr_c) + '/phase2/fig/'
-Plot_Error(losses_2_d, '2d', path_fig_phase2)
+f.close()
+Plot_Error(losses_2_d, '2d', path_lr + '/')
 
 # PHASE 3
 # both the completion network and content discriminators are trained jointly until the end of training
 
+f = open(path_lr + "/phase3_losses.txt", "w+")
 for ep in range(epoch3):
     for training_x in train_dataset:
         # fake forward
@@ -230,6 +251,7 @@ for ep in range(epoch3):
         print(
             f"[PHASE3 : EPOCH]: {ep + 1}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f}")
         display.clear_output(wait=True)
+        f.write(f"[PHASE3 : EPOCH]: {ep + 1}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f} \n")
 
         # test
         if ep % snaperiod_1 == 0:
@@ -245,15 +267,22 @@ for ep in range(epoch3):
                 testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
                 testing_output = model_completion(testing_input.float())
 
-                path_tensor_phase3 = path + '/lr' + str(lr_c) + '/phase3/tensor/'
-                path_fig_phase3 = path + '/lr' + str(lr_c) + '/phase3/fig/'
+                path_phase = path_lr + '/' + 'phase3'
+                if not os.path.exists(path_phase):
+                    os.mkdir(path_phase)
+                path_tensor = path_phase + '/tensor/'
+                if not os.path.exists(path_tensor):
+                    os.mkdir(path_tensor)
+                path_fig = path_phase + '/fig/'
+                if not os.path.exists(path_fig):
+                    os.mkdir(path_fig)
 
-                path_tensor_epoch = path_tensor_phase3 + 'epoch_' + str(ep)
+                path_tensor_epoch = path_tensor + 'epoch_' + str(ep)
                 if not os.path.exists(path_tensor_epoch):
                     os.mkdir(path_tensor_epoch)
                 torch.save(testing_output, path_tensor_epoch + "/tensor_phase3" + ".pt")
 
-                path_fig_epoch = path_fig_phase3 + 'epoch_' + str(ep)
+                path_fig_epoch = path_fig + 'epoch_' + str(ep)
                 if not os.path.exists(path_fig_epoch):
                     os.mkdir(path_fig_epoch)
 
@@ -270,5 +299,10 @@ for ep in range(epoch3):
                         plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
                         plt.close()
 
-Plot_Error(losses_3_d, '3d', path_fig_phase3)
-Plot_Error(losses_3_c, '3c', path_fig_phase3)
+f.close()
+Plot_Adversarial_Error(losses_3_c, losses_3_d, path_lr + '/')
+
+print('final loss of completion    network at epoch 1 : ', losses_1_c[-1])
+print('final loss of discriminator network at epoch 2 : ', losses_2_d[-1])
+print('final loss of completion    network at epoch 3 : ', losses_3_c[-1])
+print('final loss of discriminator network at epoch 3 : ', losses_3_d[-1])
