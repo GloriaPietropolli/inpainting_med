@@ -39,14 +39,14 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.01
+lr_c = 0.05
 lr_d = 0.01
 alpha = torch.tensor(alpha)
 num_test_completions = 10
-epoch1 = 1  # number of step for the first phase of training
-snaperiod_1 = 1
-epoch2 = 1  # number of step for the second phase of training
-epoch3 = 1 # number of step for the third phase of training
+epoch1 = 50  # number of step for the first phase of training
+epoch2 = 50  # number of step for the second phase of training
+epoch3 = 25 # number of step for the third phase of training
+snaperiod = 1
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
@@ -95,7 +95,7 @@ for ep in range(epoch1):
         optimizer_completion.step()
 
     # test
-    if ep % snaperiod_1 == 0:
+    if ep % snaperiod == 0:
         model_completion.eval()
         with torch.no_grad():
             testing_x = random.choice(train_dataset)
@@ -254,7 +254,7 @@ for ep in range(epoch3):
         f.write(f"[PHASE3 : EPOCH]: {ep + 1}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f} \n")
 
         # test
-        if ep % snaperiod_1 == 0:
+        if ep % snaperiod == 0:
             model_completion.eval()
             with torch.no_grad():
                 testing_x = random.choice(train_dataset)

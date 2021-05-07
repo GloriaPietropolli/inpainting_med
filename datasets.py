@@ -348,7 +348,6 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, year_limits, resol
     year_limits = (year_min, year_max)
     resolution = (w_res, h_res, d_res) dimension of a voxel (in km)
     """
-    set_measurement = set()
     lat_min, lat_max = lat_limits
     lon_min, lon_max = lon_limits
     depth_min, depth_max = depth_limits
@@ -360,8 +359,7 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, year_limits, resol
     d = np.int((depth_max - depth_min) / d_res + 1)
 
     list_data = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 0].tolist()
-    list_datetime = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 3].tolist()  # at
-    # each element of list_data corresponds one element of list_datetime
+    list_datetime = pd.read_csv(float_path + 'data/Float_Index.txt', header=None).to_numpy()[:, 3].tolist()
 
     for i in range(np.size(list_data)):  # indexing on list_data and list_datetime also
         path_current_float = float_path + "data/" + list_data[i]
@@ -376,8 +374,10 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, year_limits, resol
         if not year_min < time < year_max:
             print('time out of range', time)
             continue
+
         index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
         select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
+        select_weigth = list_weight_float[index]  # weight tensor we are modifying
 
         lat = float(ds['LATITUDE'][:].data)  # single value
         lon = float(ds['LONGITUDE'][:].data)  # single value
@@ -391,10 +391,11 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, year_limits, resol
             depth_list.append(to_depth(pres, lat))
 
         temp = ds['TEMP'][:].data[0]  # list of value
-        salinity = ds['PSAL'][:].data[0]  # list of value
-        if 'DOXY' not in var_list:
-            continue
-        doxy = ds['DOXY'][:].data[0]  # list of value
+        salinity = ds['PSAL'][:].data[0]
+        if 'DOXY' in var_list:
+            doxy = ds['DOXY'][:].data[0]
+        if 'CHLA' in var_list:
+            chla = ds['CHLA'][:].data[0]
 
         if lat_max > lat > lat_min:
             if lon_max > lon > lon_min:
@@ -403,34 +404,57 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, year_limits, resol
                         depth_index = find_index(depth, depth_limits, d)
                         channel_index = np.where(depth_list == depth)[0][0]
 
-                        temp_v, salinity_v, doxy_v = temp[channel_index], salinity[channel_index], doxy[
-                            channel_index]
+                        temp_v, salinity_v = temp[channel_index], salinity[channel_index]
 
                         if not -3 < temp_v < 40:
                             print('invalid temperature found', temp_v)
                         else:
                             select_parallelepiped[0, 0, depth_index, lon_index, lat_index] = float(temp_v)
+                            select_weigth[0, 0, depth_index, lon_index, lat_index] = 1.0
 
                         if not 2 < salinity_v < 41:
                             print('invalid psal found', salinity_v)
                         else:
                             select_parallelepiped[0, 1, depth_index, lon_index, lat_index] = float(salinity_v)
+                            select_weigth[0, 1, depth_index, lon_index, lat_index] = 1.0
 
-                        if not -5 < doxy_v < 600:
-                            print('invalid doxy found', doxy_v)
-                            select_parallelepiped[0, 2, depth_index, lon_index, lat_index] = float(doxy_v)
-                        set_measurement.add(time)
+                        if 'DOXY' in var_list:
+                            doxy_v = doxy[channel_index]
+                            if not -5 < doxy_v < 600:
+                                print('invalid doxy found', doxy_v)
+                            else:
+                                select_parallelepiped[0, 2, depth_index, lon_index, lat_index] = float(doxy_v)
+                                select_weigth[0, 2, depth_index, lon_index, lat_index] = 1.0
 
-    return set_measurement
+                        if 'CHLA' in var_list:
+                            chla_v = chla[channel_index]
+                            if not 0.0005 < chla_v < 15:
+                                print('invalid chla found', chla_v)
+                            else:
+                                select_parallelepiped[0, 3, depth_index, lon_index, lat_index] = float(chla_v)
+                                select_weigth[0, 3, depth_index, lon_index, lat_index] = 1.0
+
+    return
 
 
 list_data_time = create_list_date_time(year_interval)
+
 list_parallelepiped = [
     create_box(batch, number_channel, latitude_interval, longitude_interval, depth_interval, resolution) for i in
     range(len(list_data_time))]
 
+list_weight_float = [
+    create_box(batch, number_channel, latitude_interval, longitude_interval, depth_interval, resolution) for i in
+    range(len(list_data_time))]
+
+
+t = 't'
+w = 'w'
 if kindof == 'float':
     insert_float_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)  # plot tensor
+    plot_routine(kindof, list_weight_float, list_data_time, channels, year_interval, w)  # plot weight
+
 if kindof == 'model2015':
     # insert_model_phys_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     print('phys value inserted')
@@ -443,6 +467,7 @@ if kindof == 'sat':
     # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)
 if kindof == 'flat_sat':
     insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
-    plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)
+    # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)
 
-# save_routine(kindof, list_parallelepiped, list_data_time, year_interval)
+save_routine(kindof, list_parallelepiped, list_data_time, year_interval, 't')
+save_routine(kindof, list_parallelepiped, list_data_time, year_interval, 'w')

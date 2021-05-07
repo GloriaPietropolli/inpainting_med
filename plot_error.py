@@ -14,13 +14,30 @@ def Plot_Error(losses, flag, path):
         plt.legend()
         plt.savefig(path + "_LOSS1C.png")
         plt.close()
+
+        label = 'log losses ' + flag
+        plt.plot(np.log(losses), '-r', label=label)
+        plt.xlabel('number iteration phase1')
+        plt.title('COMPLETION LOSS PHASE 1')
+        plt.legend()
+        plt.savefig(path + "_LOSS_LOG_1C.png")
+        plt.close()
+
     if flag == '2d':
-        label = 'losses' + flag
+        label = 'losses ' + flag
         plt.plot(losses, '-r', label=label)
         plt.xlabel('number iteration phase2')
         plt.title('DISCRIMINATOR LOSS PHASE 2')
         plt.legend()
         plt.savefig(path + "_LOSS2D.png")
+        plt.close()
+
+        label = 'log losses ' + flag
+        plt.plot(np.log(losses), '-r', label=label)
+        plt.xlabel('number iteration phase2')
+        plt.title('DISCRIMINATOR LOG LOSS PHASE 2')
+        plt.legend()
+        plt.savefig(path + "_LOSS_LOG_2D.png")
         plt.close()
 
 
