@@ -1,7 +1,6 @@
 """
 Implementation of the training routine for the 3D CNN with GAN
-
-- train_dataset : list/array of 4D (or 5D ?) tensor in form (bs, input_channels, D_in, H_in, W_in)
+- train_dataset : list/array of 5D (or 5D ?) tensor in form (bs, input_channels, D_in, H_in, W_in)
 """
 import random
 import torch.nn as nn
@@ -12,10 +11,12 @@ from discriminator import Discriminator
 from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
-from utils import generate_input_mask, generate_hole_area, crop, sample_random_batch
+from utils import generate_input_mask, generate_hole_area, crop
 from normalization import Normalization
+from plot_error import Plot_Error
 from dumb_list import *
 from get_dataset import *
+
 
 num_channel = number_channel  # 0,1,2,3
 
@@ -38,19 +39,25 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.01
-lr_d = 0.01
+lr_c = 0.1
+lr_d = 0.001
 alpha = torch.tensor(alpha)
 num_test_completions = 10
 epoch1 = 50  # number of step for the first phase of training
 snaperiod_1 = 1
 epoch2 = 50  # number of step for the second phase of training
-epoch3 = 50  # number of step for the third phase of training
+epoch3 = 50 # number of step for the third phase of training
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
-cn_input_size = (29, 65, 75)
-ld_input_size = (29, 50, 50)
+cn_input_size = (29, 65, 73)
+ld_input_size = (20, 50, 50)
+
+# losses vectors
+losses_1_c = []  # losses of the completion network during phase 1
+losses_2_d = []  # losses of the discriminator network during phase 2
+losses_3_c = []  # losses of the completion network during phase 3
+losses_3_d = []  # losses of the discriminator network during phase 3
 
 # PHASE 1
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
@@ -68,6 +75,7 @@ for ep in range(epoch1):
         output = model_completion(input.float())
 
         loss_completion = completion_network_loss(training_x, output, mask)  # MSE
+        losses_1_c.append(loss_completion.item())
 
         print(f"[PHASE1 : EPOCH]: {ep + 1}, [LOSS]: {loss_completion.item():.12f}")
         display.clear_output(wait=True)
@@ -75,7 +83,6 @@ for ep in range(epoch1):
         optimizer_completion.zero_grad()
         loss_completion.backward()
         optimizer_completion.step()
-
 
     # test
     if ep % snaperiod_1 == 0:
@@ -116,6 +123,9 @@ for ep in range(epoch1):
                     plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
                     plt.close()
 
+Plot_Error(losses_1_c, '1c', path_fig_phase1)  # plot of the error in phase1
+
+
 # PHASE 2
 # COMPLETION NETWORK is FIXED and DISCRIMINATORS are trained form scratch for T_d (=epoch2) iterations
 
@@ -151,6 +161,7 @@ for ep in range(epoch2):
         loss_real = loss_discriminator(output_real, real)
 
         loss = (loss_real + loss_fake) / 2.0
+        losses_2_d.append(loss.item())
 
         print(f"[PHASE2 : EPOCH]: {ep + 1}, [LOSS]: {loss.item():.12f}")
         display.clear_output(wait=True)
@@ -158,6 +169,9 @@ for ep in range(epoch2):
         loss.backward()
         optimizer_discriminator.step()
         optimizer_discriminator.zero_grad()
+
+path_fig_phase2 = path + '/lr' + str(lr_c) + '/phase2/fig/'
+Plot_Error(losses_2_d, '2d', path_fig_phase2)
 
 # PHASE 3
 # both the completion network and content discriminators are trained jointly until the end of training
@@ -176,9 +190,6 @@ for ep in range(epoch3):
         input_completion = torch.cat((training_x_masked, mask), dim=1)
         output_completion = model_completion(input_completion.float())
 
-        output_completion = output_completion[:, :, :, :-1, :]
-        output_completion = torch.cat((output_completion, torch.zeros(1, 4, 30, 65, 1)), -1)
-
         input_global_discriminator_fake = output_completion.detach()
         input_local_discriminator_fake = crop(input_global_discriminator_fake, hole_area_fake)
         output_fake = model_discriminator((input_local_discriminator_fake, input_global_discriminator_fake))
@@ -194,6 +205,7 @@ for ep in range(epoch3):
         loss_real = loss_discriminator(output_real, real)
 
         loss_d = (loss_real + loss_fake) * alpha / 2.0
+        losses_3_d.append(loss_d.item())
 
         # backward discriminator
         loss_d.backward()
@@ -208,6 +220,7 @@ for ep in range(epoch3):
         loss_c2 = loss_discriminator(output_fake, real)
 
         loss_c = (loss_c1 + alpha * loss_c2) / 2.0
+        losses_3_c.append(loss_c.item())
 
         # backward completion
         loss_c.backward()
@@ -256,3 +269,6 @@ for ep in range(epoch3):
                         plt.colorbar()
                         plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
                         plt.close()
+
+Plot_Error(losses_3_d, '3d', path_fig_phase3)
+Plot_Error(losses_3_c, '3c', path_fig_phase3)

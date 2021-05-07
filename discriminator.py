@@ -3,7 +3,6 @@ definition of the local discriminator (LocDiscriminator) and of the global discr
 for the implementation of the GAN
 """
 
-
 import torch.nn as nn
 from layers import Flatten, Concatenate
 
@@ -40,7 +39,7 @@ class LocDiscriminator(nn.Module):
         self.bn5 = nn.BatchNorm3d(512)
         self.af5 = nn.ReLU()
 
-        input_linear_layer = 32 * (self.height // 5) * (self.width // 5) * (self.depth // 8)
+        input_linear_layer = 16 * (self.height // 6) * (self.width // 6) * (self.depth // 8)
         # sto cambiando per cosa divido self-h, self.w e self.d controlla articolo se i nmeri posso sceglirli come vgl
         self.linear = nn.Linear(input_linear_layer, 1024)
         self.af_final = nn.ReLU()
@@ -118,7 +117,7 @@ class Discriminator(nn.Module):
                              self.model_global_discriminator.output_shape[-1]
         self.concatenate = Concatenate(dim=-1)
         self.linear = nn.Linear(input_linear_layer, 1)
-        self.af = nn.ReLU()
+        self.af = nn.Sigmoid()
 
     def forward(self, x):
         x_local_discriminator, x_global_discriminator = x

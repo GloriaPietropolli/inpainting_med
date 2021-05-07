@@ -56,10 +56,9 @@ class CompletionN(nn.Module):
         self.bn11 = nn.BatchNorm3d(256)
         self.af11 = nn.SELU()
 
-        if kindof != 'flat_sat':
-            self.conv12 = nn.Conv3d(256, 256, kernel_size=4, stride=1, padding=1)
-            self.bn12 = nn.BatchNorm3d(256)
-            self.af12 = nn.SELU()
+        self.conv12 = nn.Conv3d(256, 256, kernel_size=4, stride=1, padding=1)
+        self.bn12 = nn.BatchNorm3d(256)
+        self.af12 = nn.SELU()
 
         self.deconv13 = nn.ConvTranspose3d(256, 128, kernel_size=4, stride=2, padding=1)
         self.bn13 = nn.BatchNorm3d(128)
@@ -77,12 +76,8 @@ class CompletionN(nn.Module):
         self.bn16 = nn.BatchNorm3d(32)
         self.af16 = nn.SELU()
 
-        if kindof == 'flat_sat':
-            self.conv18 = nn.Conv3d(32, out_channels, kernel_size=(7, 7, 5), stride=1, padding=2)
-            self.af18 = nn.SELU()
-        else:
-            self.conv17 = nn.Conv3d(32, out_channels, kernel_size=(3, 3, 1), stride=1, padding=2)
-            self.af17 = nn.SELU()
+        self.conv17 = nn.Conv3d(32, out_channels, kernel_size=(3, 3, 3), stride=1, padding=2)
+        self.af17 = nn.SELU()
 
     def forward(self, x):
         x = self.bn1(self.af1(self.conv1(x)))
@@ -96,15 +91,11 @@ class CompletionN(nn.Module):
         x = self.bn9(self.af9(self.conv9(x)))
         x = self.bn10(self.af10(self.conv10(x)))
         x = self.bn11(self.af11(self.conv11(x)))
-        if kindof != 'flat_sat':
-            x = self.bn12(self.af12(self.conv12(x)))
+        x = self.bn12(self.af12(self.conv12(x)))
         x = self.bn13(self.af13(self.deconv13(x)))
         x = self.bn14(self.af14(self.conv14(x)))
         x = self.bn15(self.af15(self.deconv15(x)))
         x = self.bn16(self.af16(self.conv16(x)))
-        if kindof == 'flat_sat':
-            x = self.af18(self.conv18(x))
-        else:
-            x = self.af17(self.conv17(x))
+        x = self.af17(self.conv17(x))
 
         return x

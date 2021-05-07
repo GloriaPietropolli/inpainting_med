@@ -45,25 +45,9 @@ def get_list_sat_tensor():
     return sat_tensor
 
 
-def get_list_flat_sat_tensor():
-    """
-    created a list containing the my_tensor representing the MODEL information uploaded
-    """
-    sat_tensor = []
-    directory_sat = directory_tensor + 'flat_sat/'
-    list_ptFIles = os.listdir(directory_sat)
-    for ptFiles in list_ptFIles:
-        my_tensor = torch.load(directory_sat + ptFiles)
-        sat_tensor.append(my_tensor[:, :, :-1, :, :])
-    return sat_tensor
-
-
 if kindof == 'float':
     list_float_tensor = get_list_float_tensor()
 if kindof == 'model2015':
     list_model_tensor = get_list_model_tensor()
 if kindof == 'sat':
     list_sat_tensor = get_list_sat_tensor()
-if kindof == 'flat_sat':
-    list_sat_tensor = get_list_flat_sat_tensor()
-

@@ -15,8 +15,6 @@ if kindof == 'float':
     channels = [0, 1, 2]
 if kindof == 'sat':
     channels = [3]
-if kindof == 'flat_sat':
-    channels = [3]
 if kindof == 'model2015':
     channels = [0, 1, 2, 3]
 
