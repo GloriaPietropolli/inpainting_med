@@ -114,7 +114,7 @@ def insert_model_phys_values(year, lat_limits, lon_limits, depth_limits, year_li
     h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
     d = np.int((depth_max - depth_min) / d_res + 1)
 
-    path_phys = os.getcwd() + "/MODEL/" + str(year) + '/phys/'
+    path_phys = os.getcwd() + "/dataset/MODEL/" + str(year) + '/phys/'
     phys_files = os.listdir(path_phys)
 
     for model_file in phys_files:
@@ -180,7 +180,7 @@ def insert_model_doxy_values(year, lat_limits, lon_limits, depth_limits, year_li
     h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
     d = np.int((depth_max - depth_min) / d_res + 1)
 
-    path_doxy = os.getcwd() + "/MODEL/" + str(year) + '/O2o/'
+    path_doxy = os.getcwd() + "/dataset/MODEL/" + str(year) + '/O2o/'
     doxy_files = os.listdir(path_doxy)
     for model_file in doxy_files:
         file_doxy = path_doxy + model_file
@@ -241,7 +241,7 @@ def insert_model_chl_values(year, lat_limits, lon_limits, depth_limits, year_lim
     h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
     d = np.int((depth_max - depth_min) / d_res + 1)
 
-    path_chl = os.getcwd() + "/MODEL/" + str(year) + '/P_l/'
+    path_chl = os.getcwd() + "/dataset/MODEL/" + str(year) + '/P_l/'
     chl_files = os.listdir(path_chl)
     for model_file in chl_files:
         file_chl = path_chl + model_file
@@ -301,7 +301,7 @@ def insert_sat_values(lat_limits, lon_limits, depth_limits, year_limits, resolut
     h = np.int((lon_max - lon_min) * constant_longitude / h_res + 1)
     d = np.int((depth_max - depth_min) / d_res + 1)
 
-    path_sat = os.getcwd() + "/WEEKLY_1_24/"
+    path_sat = os.getcwd() + "/dataset/WEEKLY_1_24/"
     sat_measurement = os.listdir(path_sat)
 
     for sat_file in sat_measurement:
@@ -315,6 +315,7 @@ def insert_sat_values(lat_limits, lon_limits, depth_limits, year_limits, resolut
             continue
         index = list_data_time.index(time)  # index input tens considered, i.e. the one to upd
         select_parallelepiped = list_parallelepiped[index]  # parall we are modifying
+        select_weigth = list_weight_sat[index]  # weight tensor we are modifying
 
         latitude_list = ds['lat'][:].data
         longitude_list = ds['lon'][:].data
@@ -329,13 +330,13 @@ def insert_sat_values(lat_limits, lon_limits, depth_limits, year_limits, resolut
                 lat = latitude_list[i]
                 lon = longitude_list[j]
                 chl = matrix_chl[i, j]
-                if chl == -999:
-                    continue
-                if lat_max > lat > lat_min:
-                    if lon_max > lon > lon_min:
-                        lat_index = find_index(lat, lat_limits, w)
-                        lon_index = find_index(lon, lon_limits, h)
-                        select_parallelepiped[0, 3, depth_index, lon_index, lat_index] = float(chl)
+                if -5 < chl < 600:
+                    if lat_max > lat > lat_min:
+                        if lon_max > lon > lon_min:
+                            lat_index = find_index(lat, lat_limits, w)
+                            lon_index = find_index(lon, lon_limits, h)
+                            select_parallelepiped[0, 3, depth_index, lon_index, lat_index] = float(chl)
+                            select_weigth[0, 3, depth_index, lon_index, lat_index] = 1.0
     return
 
 
@@ -428,7 +429,7 @@ def insert_float_values(lat_limits, lon_limits, depth_limits, year_limits, resol
 
                         if 'CHLA' in var_list:
                             chla_v = chla[channel_index]
-                            if not 0.0005 < chla_v < 15:
+                            if not -5 < chla_v < 600:
                                 print('invalid chla found', chla_v)
                             else:
                                 select_parallelepiped[0, 3, depth_index, lon_index, lat_index] = float(chla_v)
@@ -447,6 +448,9 @@ list_weight_float = [
     create_box(batch, number_channel, latitude_interval, longitude_interval, depth_interval, resolution) for i in
     range(len(list_data_time))]
 
+list_weight_sat = [
+    create_box(batch, number_channel, latitude_interval, longitude_interval, depth_interval, resolution) for i in
+    range(len(list_data_time))]
 
 t = 't'
 w = 'w'
@@ -464,7 +468,8 @@ if kindof == 'model2015':
     print('doxy value inserted')
 if kindof == 'sat':
     insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
-    # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)
+    plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)
+    plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, w)
 if kindof == 'flat_sat':
     insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)

@@ -17,7 +17,6 @@ from plot_error import Plot_Error, Plot_Adversarial_Error
 from dumb_list import *
 from get_dataset import *
 
-
 num_channel = number_channel  # 0,1,2,3
 
 path = 'result/' + kindof  # result directory
@@ -31,7 +30,11 @@ if kindof == 'sat':
 if kindof == 'dumb':
     train_dataset = dumb_dataset
 
+index_testing = -1
+
 train_dataset = Normalization(train_dataset)
+testing_x = train_dataset[index_testing]  # test on the last element of the list
+train_dataset.pop(-1)
 
 mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))  # transform the mean_value_pixel
@@ -39,13 +42,13 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.05
-lr_d = 0.01
+lr_c = 0.005
+lr_d = 0.005
 alpha = torch.tensor(alpha)
 num_test_completions = 10
-epoch1 = 50  # number of step for the first phase of training
-epoch2 = 50  # number of step for the second phase of training
-epoch3 = 25 # number of step for the third phase of training
+epoch1 = 100  # number of step for the first phase of training
+epoch2 = 25  # number of step for the second phase of training
+epoch3 = 50  # number of step for the third phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
@@ -54,18 +57,22 @@ cn_input_size = (29, 65, 73)
 ld_input_size = (20, 50, 50)
 
 # make directory
-path_configuration = path + '/' + str(epoch1) + 'ep1_' + str(epoch2) + 'ep2_' + str(epoch3) + 'ep3_'
+path_configuration = path + '/' + str(epoch1) + 'ep1_' + str(epoch2) + 'ep2_' + str(epoch3) + 'ep3'
 if not os.path.exists(path_configuration):
     os.mkdir(path_configuration)
-path_lr = path_configuration + '/' + str(lr_c) + 'lrc_' + str(lr_d) + 'lrd_'
+path_lr = path_configuration + '/' + str(lr_c) + 'lrc_' + str(lr_d) + 'lrd'
 if not os.path.exists(path_lr):
     os.mkdir(path_lr)
 
-# losses vectors
 losses_1_c = []  # losses of the completion network during phase 1
 losses_2_d = []  # losses of the discriminator network during phase 2
 losses_3_c = []  # losses of the completion network during phase 3
 losses_3_d = []  # losses of the discriminator network during phase 3
+
+losses_1_c_test = []  # losses of TEST of the completion network during phase 1
+losses_2_d_test = []  # losses of TEST of the discriminator network during phase 2
+losses_3_c_test = []  # losses of TEST of the completion network during phase 3
+losses_3_d_test = []  # losses of TEST of the discriminator network during phase 3
 
 # PHASE 1
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
@@ -98,15 +105,18 @@ for ep in range(epoch1):
     if ep % snaperiod == 0:
         model_completion.eval()
         with torch.no_grad():
-            testing_x = random.choice(train_dataset)
+            # testing_x = random.choice(test_dataset)
             training_mask = generate_input_mask(
                 shape=(testing_x.shape[0], 1, testing_x.shape[2], testing_x.shape[3], testing_x.shape[4]),
                 hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
                 hole_area=generate_hole_area(ld_input_size,
                                              (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
-            testing_x_mask = testing_x - testing_x * mask + mean_value_pixel * mask
+            testing_x_mask = testing_x - testing_x * training_mask + mean_value_pixel * training_mask
             testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
             testing_output = model_completion(testing_input.float())
+
+            loss_1c_test = completion_network_loss(testing_x, testing_output, testing_x_mask)
+            losses_1_c_test.append(loss_1c_test)
 
             path_phase = path_lr + '/' + 'phase1'
             if not os.path.exists(path_phase):
@@ -141,8 +151,7 @@ for ep in range(epoch1):
                     plt.close()
 
 f.close()
-Plot_Error(losses_1_c, '1c', path_lr + '/')  # plot of the error in phase1
-
+Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
 # PHASE 2
 # COMPLETION NETWORK is FIXED and DISCRIMINATORS are trained form scratch for T_d (=epoch2) iterations
@@ -251,7 +260,8 @@ for ep in range(epoch3):
         print(
             f"[PHASE3 : EPOCH]: {ep + 1}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f}")
         display.clear_output(wait=True)
-        f.write(f"[PHASE3 : EPOCH]: {ep + 1}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f} \n")
+        f.write(
+            f"[PHASE3 : EPOCH]: {ep + 1}, [LOSS COMPLETION]: {loss_c.item():.12f}, [LOSS DISCRIMINATOR]: {loss_d.item():.12f} \n")
 
         # test
         if ep % snaperiod == 0:
@@ -263,9 +273,12 @@ for ep in range(epoch3):
                     hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
                     hole_area=generate_hole_area(ld_input_size,
                                                  (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
-                testing_x_mask = testing_x - testing_x * mask + mean_value_pixel * mask
+                testing_x_mask = testing_x - testing_x * training_mask + mean_value_pixel * training_mask
                 testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
                 testing_output = model_completion(testing_input.float())
+
+                loss_3c_test = completion_network_loss(testing_x, testing_output, testing_x_mask)
+                losses_3_c_test.append(loss_3c_test)
 
                 path_phase = path_lr + '/' + 'phase3'
                 if not os.path.exists(path_phase):
@@ -299,8 +312,15 @@ for ep in range(epoch3):
                         plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
                         plt.close()
 
+# save the model
+
+
+path_model = 'model/' + kindof + '/model_completion' + 'epoch_' + str(epoch1) + '_' + str(epoch2) + '_' + str(
+    epoch3) + '_lrc_' + str(lr_c) + '_lrd_' + str(lr_d) + '.pt '
+torch.save(model_completion.state_dict(), path_model)
+
 f.close()
-Plot_Adversarial_Error(losses_3_c, losses_3_d, path_lr + '/')
+Plot_Adversarial_Error(losses_3_c_test, losses_3_d, path_lr + '/')
 
 print('final loss of completion    network at epoch 1 : ', losses_1_c[-1])
 print('final loss of discriminator network at epoch 2 : ', losses_2_d[-1])
