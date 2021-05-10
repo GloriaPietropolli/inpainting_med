@@ -5,17 +5,17 @@ from get_dataset import *
 from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import *
+import matplotlib.pyplot as plt
 # how to get a model
 
 path_model = 'model/' + kindof + '/'
 list_avaiable_models = os.listdir(path_model)
 a_model = list_avaiable_models[0]
+name_model = a_model[:-3]
 
 model = CompletionN()
 model.load_state_dict(torch.load(path_model + a_model))
 model.eval()
-
-path = 'result/' + kindof  # result directory
 
 if kindof == 'float':
     train_dataset = list_float_tensor
@@ -61,3 +61,20 @@ with torch.no_grad():
 
     loss_1c_test = completion_network_loss(testing_x, testing_output, testing_x_mask)
     print(loss_1c_test)
+
+path_fig = path_model + name_model
+if not os.path.exists(path_fig):
+    os.mkdir(path_fig)
+
+number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
+
+for channel in channels:
+    for i in range(number_fig):
+        path_fig_channel = path_fig + '/' + str(channel)
+        if not os.path.exists(path_fig_channel):
+            os.mkdir(path_fig_channel)
+        cmap = plt.get_cmap('Greens')
+        plt.imshow(testing_output[0, channel, i, :, :], cmap=cmap)
+        plt.colorbar()
+        plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
+        plt.close()
