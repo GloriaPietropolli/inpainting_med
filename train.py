@@ -118,6 +118,8 @@ for ep in range(epoch1):
             loss_1c_test = completion_network_loss(testing_x, testing_output, training_mask)
             losses_1_c_test.append(loss_1c_test)
 
+
+
             print(f"[PHASE1 : EPOCH]: {ep + 1}, [TEST LOSS]: {loss_1c_test.item():.12f}")
             display.clear_output(wait=True)
             f_test.write(f"[PHASE1 : EPOCH]: {ep + 1}, [LOSS]: {loss_1c_test.item():.12f} \n")
