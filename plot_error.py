@@ -12,13 +12,13 @@ def Plot_Error(losses, flag, path):
         plt.xlabel('number iteration phase1')
         plt.title('TEST COMPLETION LOSS PHASE 1')
         plt.legend()
-        plt.savefig(path + "_LOSS1C.png")
+        plt.savefig(path + "_LOSS_1C.png")
         plt.close()
 
         label = 'log losses ' + flag
         plt.plot(np.log(losses), '-r', label=label)
         plt.xlabel('number iteration phase1')
-        plt.title('COMPLETION LOSS PHASE 1')
+        plt.title('TEST COMPLETION LOG LOSS PHASE 1')
         plt.legend()
         plt.savefig(path + "_LOSS_LOG_1C.png")
         plt.close()
@@ -29,7 +29,7 @@ def Plot_Error(losses, flag, path):
         plt.xlabel('number iteration phase2')
         plt.title('DISCRIMINATOR LOSS PHASE 2')
         plt.legend()
-        plt.savefig(path + "_LOSS2D.png")
+        plt.savefig(path + "_LOSS_2D.png")
         plt.close()
 
         label = 'log losses ' + flag
@@ -38,6 +38,40 @@ def Plot_Error(losses, flag, path):
         plt.title('DISCRIMINATOR LOG LOSS PHASE 2')
         plt.legend()
         plt.savefig(path + "_LOSS_LOG_2D.png")
+        plt.close()
+
+    if flag == '3c':
+        label = 'losses ' + flag
+        plt.plot(losses, '-r', label=label)
+        plt.xlabel('number iteration phase3')
+        plt.title('TEST COMPLETION LOSS PHASE 3')
+        plt.legend()
+        plt.savefig(path + "_LOSS_3C.png")
+        plt.close()
+
+        label = 'log losses ' + flag
+        plt.plot(np.log(losses), '-r', label=label)
+        plt.xlabel('number iteration phase3')
+        plt.title('TEST COMPLETION LOG LOSS PHASE 2')
+        plt.legend()
+        plt.savefig(path + "_LOSS_LOG_3C.png")
+        plt.close()
+
+    if flag == '3d':
+        label = 'losses ' + flag
+        plt.plot(losses, '-r', label=label)
+        plt.xlabel('number iteration phase3')
+        plt.title('DISCRIMINATOR LOSS PHASE 3')
+        plt.legend()
+        plt.savefig(path + "_LOSS3D.png")
+        plt.close()
+
+        label = 'log losses ' + flag
+        plt.plot(np.log(losses), '-r', label=label)
+        plt.xlabel('number iteration phase2')
+        plt.title('DISCRIMINATOR LOG LOSS PHASE 3')
+        plt.legend()
+        plt.savefig(path + "_LOSS_LOG_3D.png")
         plt.close()
 
 
