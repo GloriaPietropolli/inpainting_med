@@ -10,7 +10,7 @@ from normalization import Normalization, Normalization_Float
 from completion import CompletionN
 from utils import *
 from get_dataset import *
-from losses import completion_weighted_loss
+from losses import completion_weighted_loss, completion_network_loss
 from mean_pixel_value import *
 from plot_error import Plot_Error
 
@@ -18,14 +18,16 @@ from plot_error import Plot_Error
 # first of all we get the model trained with model's data
 path_model = 'model/' + kindof + '/'
 list_avaiable_models = os.listdir(path_model)
-a_model = list_avaiable_models[0]
+a_model = list_avaiable_models[1]
 name_model = a_model[:-3]
 
 model_completion = CompletionN()
 model_completion.load_state_dict(torch.load(path_model + a_model))
 model_completion.eval()
 
-path = 'result2/'  # where we save the information
+path = 'result2/' + name_model + '/'  # where we save the information
+if not os.path.exists(path):
+    os.mkdir(path)
 
 weight_float = get_list_float_weight_tensor()
 data_float = get_list_float_tensor()
@@ -45,8 +47,8 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # parameters for the second train routine
 alpha = 4e-4
-lr_c = 0.01
-epoch1 = 10  # number of step for the first phase of training
+lr_c = 0.0001
+epoch1 = 100  # number of step for the first phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 5, 10
 hole_min_h, hole_max_h = 30, 50
@@ -107,7 +109,7 @@ for ep in range(epoch1):
             testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
             testing_output = model_completion(testing_input.float())
 
-            loss_1c_test = completion_weighted_loss(testing_x, testing_output, training_mask, weight)
+            loss_1c_test = completion_network_loss(testing_x, testing_output, training_mask)
             losses_1_c_test.append(loss_1c_test)
 
             print(f"[EPOCH]: {ep + 1}, [TEST LOSS]: {loss_1c_test.item():.12f}")
@@ -163,10 +165,10 @@ Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
 
 # printing final loss training set
-print('final loss of completion network at phase 1 : ', losses_1_c[-1])
+print('final loss TRAINING : ', losses_1_c[-1])
 
 # printing final loss of testing set
-print('final loss TEST at phase 1 : ', losses_1_c_test[-1])
+print('final loss TEST : ', losses_1_c_test[-1])
 
 
 

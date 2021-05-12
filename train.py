@@ -31,7 +31,7 @@ if kindof == 'dumb':
 
 index_testing = -1
 
-train_dataset = Normalization(train_dataset)
+train_dataset, _, _ = Normalization(train_dataset)
 testing_x = train_dataset[index_testing]  # test on the last element of the list
 train_dataset.pop(index_testing)
 
@@ -41,8 +41,8 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.05
-lr_d = 0.05
+lr_c = 0.1
+lr_d = 0.1
 alpha = torch.tensor(alpha)
 num_test_completions = 10
 epoch1 = 50  # number of step for the first phase of training
