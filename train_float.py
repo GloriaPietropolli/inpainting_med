@@ -166,7 +166,7 @@ Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 print('final loss of completion network at phase 1 : ', losses_1_c[-1])
 
 # printing final loss of testing set
-print('final loss TEST at phase 1 : ', loss_1_c_test[-1])
+print('final loss TEST at phase 1 : ', losses_1_c_test[-1])
 
 
 
