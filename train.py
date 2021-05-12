@@ -41,13 +41,13 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.1
-lr_d = 0.1
+lr_c = 0.05
+lr_d = 0.05
 alpha = torch.tensor(alpha)
 num_test_completions = 10
-epoch1 = 10  # number of step for the first phase of training
-epoch2 = 10  # number of step for the second phase of training
-epoch3 = 10  # number of step for the third phase of training
+epoch1 = 50  # number of step for the first phase of training
+epoch2 = 50  # number of step for the second phase of training
+epoch3 = 25  # number of step for the third phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
@@ -117,8 +117,6 @@ for ep in range(epoch1):
 
             loss_1c_test = completion_network_loss(testing_x, testing_output, training_mask)
             losses_1_c_test.append(loss_1c_test)
-
-
 
             print(f"[PHASE1 : EPOCH]: {ep + 1}, [TEST LOSS]: {loss_1c_test.item():.12f}")
             display.clear_output(wait=True)

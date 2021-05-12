@@ -18,5 +18,17 @@ def Normalization(list_tensor):
         tensor = tensor[:, :, :-1, :, 1:-1]
         tensor = tensor.float()
         normalized_list.append(tensor)
-    return normalized_list
+    return normalized_list, mean_tensor, std_tensor
 
+
+def Normalization_Float(list_tensor, mean_tensor, std_tensor):
+    """
+    normalization routine for FLOAT data
+    """
+    normalized_list = []
+    for tensor in list_tensor:
+        tensor = (tensor - mean_tensor) / std_tensor
+        tensor = tensor[:, :, :-1, :, 1:-1]
+        tensor = tensor.float()
+        normalized_list.append(tensor)
+    return normalized_list
