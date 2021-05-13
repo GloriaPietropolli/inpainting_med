@@ -456,23 +456,18 @@ t = 't'
 w = 'w'
 if kindof == 'float':
     insert_float_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
-    # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)  # plot tensor
-    # plot_routine(kindof, list_weight_float, list_data_time, channels, year_interval, w)  # plot weight
-
 if kindof == 'model2015':
-    # insert_model_phys_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    insert_model_phys_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     print('phys value inserted')
-    # insert_model_chl_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    insert_model_chl_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     print('chl value inserted')
-    # insert_model_doxy_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    insert_model_doxy_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     print('doxy value inserted')
 if kindof == 'sat':
     insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)
     plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, w)
-if kindof == 'flat_sat':
-    insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
-    # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval)
 
-# save_routine(kindof, list_parallelepiped, list_data_time, year_interval, 't')
-save_routine(kindof, list_weight_float, list_data_time, year_interval, 'w')
+save_routine(kindof, list_parallelepiped, list_data_time, year_interval, 't')
+if kindof == 'float':
+    save_routine(kindof, list_weight_float, list_data_time, year_interval, 'w')

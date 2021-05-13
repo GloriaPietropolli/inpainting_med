@@ -52,7 +52,7 @@ def Plot_Error(losses, flag, path):
         label = 'log losses ' + flag
         plt.plot(np.log(losses), '-r', label=label)
         plt.xlabel('number iteration phase3')
-        plt.title('TEST COMPLETION LOG LOSS PHASE 2')
+        plt.title('TEST COMPLETION LOG LOSS PHASE 3')
         plt.legend()
         plt.savefig(path + "_LOSS_LOG_3C.png")
         plt.close()

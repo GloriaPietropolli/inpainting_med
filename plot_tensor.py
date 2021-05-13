@@ -4,6 +4,7 @@ Plotting the information contained in the tensors
 import matplotlib.pyplot as plt
 import os
 import torch
+from hyperparameter import *
 
 path = "fig/"
 path_directory = os.getcwd()
@@ -68,14 +69,17 @@ def Save_Tensor(kindof, tensor, data_time, flag):
     channel = variable we want to plot
     """
     if flag == 'w':
-        directory = path_directory + '/weight_tensor/' + str(kindof)
-    if flag == 't':
-        directory = path_directory + '/tensor/' + str(kindof)
+        directory = path_directory + '/weight_tensor/'
+    else:
+        directory = path_directory + '/tensor/'
+    specific_directory = directory + str(resolution) + '/'
+    if not os.path.exists(specific_directory):
+        os.mkdir(specific_directory)
+    final_directory = specific_directory + str(kindof)
+    if not os.path.exists(final_directory):
+        os.mkdir(final_directory)
 
-    if not os.path.exists(directory):
-        os.mkdir(directory)
-
-    torch.save(tensor, directory + "/datetime_" + str(data_time) + ".pt")
+    torch.save(tensor, final_directory + "/datetime_" + str(data_time) + ".pt")
 
 
 def save_routine(kindof, list_parallelepiped, list_data_time, year_interval, flag):

@@ -295,7 +295,7 @@ for ep in range(epoch3):
             testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
             testing_output = model_completion(testing_input.float())
 
-            loss_3c_test = completion_network_loss(testing_x, testing_output, testing_x_mask)
+            loss_3c_test = completion_network_loss(testing_x, testing_output, training_mask)
             losses_3_c_test.append(loss_3c_test)
 
             print(f"[PHASE3 : EPOCH]: {ep + 1}, [TEST LOSS]: {loss_3c_test.item():.12f}")
@@ -335,14 +335,16 @@ for ep in range(epoch3):
 
 # save the model
 
-path_model = 'model/' + kindof + '/model_completion' + 'epoch_' + str(epoch1) + '_' + str(epoch2) + '_' + str(
+path_model = 'model/' + kindof + '/model_completion_' + 'epoch_' + str(epoch1) + '_' + str(epoch2) + '_' + str(
     epoch3) + '_lrc_' + str(lr_c) + '_lrd_' + str(lr_d) + '.pt '
 torch.save(model_completion.state_dict(), path_model)
 
 f.close()
-Plot_Adversarial_Error(losses_3_c_test, losses_3_d, path_lr + '/')
 Plot_Error(losses_3_c_test, '3c', path_lr + '/')
-Plot_Error(losses_3_d, '3d', path_lr + '/')
+
+# printing specifics of the problem
+print('epoch phase 1 : ', epoch1, ' -- epoch phase 2 : ', epoch2, ' -- epoch phase 3 : ', epoch3)
+print('learning rate completion : ', lr_c, ' -- learning rate discriminator : ', lr_d)
 
 # printing final loss training set
 print('final loss of completion    network at phase 1 : ', losses_1_c[-1])
@@ -351,5 +353,5 @@ print('final loss of completion    network at phase 3 : ', losses_3_c[-1])
 print('final loss of discriminator network at phase 3 : ', losses_3_d[-1])
 
 # printing final loss of testing set
-print('final loss TEST at phase 1 : ', loss_1c_test[-1])
-print('final loss TEST at phase 3 : ', loss_3c_test[-1])
+print('final loss TEST at phase 1 : ', losses_1_c_test[-1])
+print('final loss TEST at phase 3 : ', losses_3_c_test[-1])

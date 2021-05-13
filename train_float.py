@@ -18,8 +18,9 @@ from plot_error import Plot_Error
 # first of all we get the model trained with model's data
 path_model = 'model/' + kindof + '/'
 list_avaiable_models = os.listdir(path_model)
-a_model = list_avaiable_models[1]
+a_model = list_avaiable_models[3]
 name_model = a_model[:-3]
+print('model used : ', name_model)
 
 model_completion = CompletionN()
 model_completion.load_state_dict(torch.load(path_model + a_model))
@@ -46,9 +47,8 @@ mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))
 
 # parameters for the second train routine
-alpha = 4e-4
-lr_c = 0.0001
-epoch1 = 100  # number of step for the first phase of training
+lr_c = 0.00005
+epoch1 = 50  # number of step for the first phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 5, 10
 hole_min_h, hole_max_h = 30, 50
@@ -56,17 +56,16 @@ hole_min_w, hole_max_w = 30, 50
 cn_input_size = (29, 65, 73)
 ld_input_size = (20, 50, 50)
 
-path_configuration = path + '/' + str(epoch1) + 'ep'
+path_configuration = path + '/' + str(epoch1)
 if not os.path.exists(path_configuration):
     os.mkdir(path_configuration)
-path_lr = path_configuration + '/' + str(lr_c) + 'lrc'
+path_lr = path_configuration + '/' + str(lr_c)
 if not os.path.exists(path_lr):
     os.mkdir(path_lr)
 
 losses_1_c = []  # losses of the completion network during phase 1
 losses_1_c_test = []  # losses of TEST of the completion network during phase 1
 
-# PHASE 1
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
 optimizer_completion = Adadelta(model_completion.parameters(), lr=lr_c)
 f = open(path_lr + "/phase1_losses.txt", "w+")
@@ -110,7 +109,7 @@ for ep in range(epoch1):
             testing_output = model_completion(testing_input.float())
 
             loss_1c_test = completion_network_loss(testing_x, testing_output, training_mask)
-            losses_1_c_test.append(loss_1c_test)
+            losses_1_c_test.append(loss_1c_test.item())
 
             print(f"[EPOCH]: {ep + 1}, [TEST LOSS]: {loss_1c_test.item():.12f}")
             display.clear_output(wait=True)
@@ -155,7 +154,7 @@ for ep in range(epoch1):
                             os.mkdir(path_fig_channel)
                         plt.imshow(testing_x[0, channel, i, :, :], cmap=cmap)
                         plt.colorbar()
-                        plt.savefig(path_fig_channel + "/profondity_level_original_" + str(i) + ".png")
+                        plt.savefig(path_fig_channel + "/profundity_level_original_" + str(i) + ".png")
                         plt.close()
 
 
@@ -170,6 +169,5 @@ print('final loss TRAINING : ', losses_1_c[-1])
 # printing final loss of testing set
 print('final loss TEST : ', losses_1_c_test[-1])
 
-
-
-
+print('model used : ', name_model)
+print('learning rate used for the float data training : ', lr_c)
