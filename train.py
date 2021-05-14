@@ -20,14 +20,7 @@ num_channel = number_channel  # 0,1,2,3
 
 path = 'result/' + kindof  # result directory
 
-if kindof == 'float':
-    train_dataset = list_float_tensor
-if kindof == 'model2015':
-    train_dataset = list_model_tensor
-if kindof == 'sat':
-    train_dataset = list_sat_tensor
-if kindof == 'dumb':
-    train_dataset = dumb_dataset
+train_dataset = get_list_model_tensor()
 
 index_testing = -1
 
@@ -41,13 +34,13 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.1
-lr_d = 0.1
+lr_c = 0.01
+lr_d = 0.01
 alpha = torch.tensor(alpha)
 num_test_completions = 10
-epoch1 = 50  # number of step for the first phase of training
-epoch2 = 50  # number of step for the second phase of training
-epoch3 = 25  # number of step for the third phase of training
+epoch1 = 250  # number of step for the first phase of training
+epoch2 = 150  # number of step for the second phase of training
+epoch3 = 150  # number of step for the third phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50

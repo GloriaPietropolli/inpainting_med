@@ -61,6 +61,19 @@ def get_list_float_weight_tensor():
     return list_float_tensor
 
 
+def get_list_sat_weight_tensor():
+    """
+    created a list containing the my_tensor representing the FLOAT information uploaded
+    """
+    list_sat_tensor = []
+    directory_float = directory_weight + 'sat/'
+    list_ptFIles = os.listdir(directory_float)
+    for ptFiles in list_ptFIles:
+        my_tensor = torch.load(directory_float + ptFiles)
+        list_sat_tensor.append(my_tensor)
+    return list_sat_tensor
+
+
 if kindof == 'float':
     list_float_tensor = get_list_float_tensor()
 if kindof == 'model2015':

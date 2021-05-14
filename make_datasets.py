@@ -456,6 +456,7 @@ t = 't'
 w = 'w'
 if kindof == 'float':
     insert_float_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
+    plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)
 if kindof == 'model2015':
     insert_model_phys_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     print('phys value inserted')
@@ -466,8 +467,11 @@ if kindof == 'model2015':
 if kindof == 'sat':
     insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)
-    plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, w)
+    plot_routine(kindof, list_weight_sat, list_data_time, channels, year_interval, w)
 
 save_routine(kindof, list_parallelepiped, list_data_time, year_interval, 't')
+
 if kindof == 'float':
     save_routine(kindof, list_weight_float, list_data_time, year_interval, 'w')
+if kindof == 'sat':
+    save_routine(kindof, list_weight_sat, list_data_time, year_interval, 'w')
