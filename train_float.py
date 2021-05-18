@@ -18,7 +18,7 @@ from plot_error import Plot_Error
 # first of all we get the model trained with model's data
 path_model = 'model/model2015/'
 list_avaiable_models = os.listdir(path_model)
-a_model = list_avaiable_models[3]
+a_model = list_avaiable_models[0]
 name_model = a_model[:-3]
 print('model used : ', name_model)
 
@@ -48,7 +48,7 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # parameters for the second train routine
 lr_c = 0.00005
-epoch1 = 50  # number of step for the first phase of training
+epoch1 = 10  # number of step for the first phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 5, 10
 hole_min_h, hole_max_h = 30, 50
@@ -157,7 +157,7 @@ for ep in range(epoch1):
                         plt.savefig(path_fig_channel + "/profundity_level_original_" + str(i) + ".png")
                         plt.close()
 
-path_model = 'model/' + kindof + '/model_sat_' + 'epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt '
+path_model = 'model/' + kindof + '/model_float_' + 'epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt '
 torch.save(model_completion.state_dict(), path_model)
 
 

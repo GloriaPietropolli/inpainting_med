@@ -10,7 +10,7 @@ from normalization import Normalization, Normalization_Float
 from completion import CompletionN
 from utils import *
 from get_dataset import *
-from losses import completion_weighted_loss, completion_network_loss
+from losses import completion_weighted_loss, completion_network_loss, completion_sat_loss
 from mean_pixel_value import *
 from plot_error import Plot_Error
 
@@ -107,7 +107,7 @@ for ep in range(epoch1):
             testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
             testing_output = model_completion(testing_input.float())
 
-            loss_test = completion_network_loss(testing_x, testing_output, training_mask)
+            loss_test = completion_sat_loss(testing_x, testing_output, training_mask, weight)
             losses_test.append(loss_test.item())
 
             print(f"[EPOCH]: {ep + 1}, [TEST LOSS]: {loss_test.item():.12f}")
@@ -156,7 +156,7 @@ for ep in range(epoch1):
                         plt.savefig(path_fig_channel + "/profundity_level_original_" + str(i) + ".png")
                         plt.close()
 
-path_model = 'model/' + kindof + '/model_float_' + 'epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt '
+path_model = 'model/' + kindof + '/model_sat_' + 'epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt '
 torch.save(model_completion.state_dict(), path_model)
 
 f.close()

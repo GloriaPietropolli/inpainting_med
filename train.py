@@ -18,7 +18,7 @@ from get_dataset import *
 
 num_channel = number_channel  # 0,1,2,3
 
-path = 'result/' + kindof  # result directory
+path = 'result/model2015'  # result directory
 
 train_dataset = get_list_model_tensor()
 
