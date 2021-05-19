@@ -122,9 +122,9 @@ for ep in range(epoch1):
             loss_1c_test = completion_float_loss(testing_x, testing_output, testing_mask)
             losses_1_c_test.append(loss_1c_test.item())
 
-            print(f"[EPOCH]: {ep + 1}, [TEST LOSS]: {loss_1c_test.item():.5f}")
+            print(f"[EPOCH]: {ep + 1}, [TEST LOSS]: {loss_1c_test.item():.5e}")
             display.clear_output(wait=True)
-            f_test.write(f"[EPOCH]: {ep + 1}, [LOSS]: {loss_1c_test.item():.5f} \n")
+            f_test.write(f"[EPOCH]: {ep + 1}, [LOSS]: {loss_1c_test.item():.5e} \n")
 
             path_tensor = path_lr + '/tensor/'
             if not os.path.exists(path_tensor):

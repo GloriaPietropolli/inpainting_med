@@ -12,7 +12,7 @@ from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
 from utils import generate_input_mask, generate_hole_area, crop
 from normalization import Normalization
-from plot_error import Plot_Error, Plot_Adversarial_Error
+from plot_error import Plot_Error
 from dumb_list import *
 from get_dataset import *
 

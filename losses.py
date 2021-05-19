@@ -1,5 +1,4 @@
 from torch.nn.functional import mse_loss
-import torch
 
 
 def completion_network_loss(input, output, mask):

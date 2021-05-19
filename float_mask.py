@@ -2,6 +2,9 @@ import torch
 
 
 def make_float_mask(weight, mask):
+    """"
+    adding to the original mask the complementary of the weight of the float (total mask for the training)
+    """
     weight[weight == 1] = 2
     weight[weight == 0] = 1
     weight[weight == 2] = 0
