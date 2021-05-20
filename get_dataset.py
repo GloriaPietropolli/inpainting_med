@@ -66,7 +66,7 @@ def get_list_sat_weight_tensor():
     created a list containing the my_tensor representing the FLOAT information uploaded
     """
     list_sat_tensor = []
-    directory_float = directory_weight + 'sat/'
+    directory_float = directory_weight + str(resolution) + '/sat/'
     list_ptFIles = os.listdir(directory_float)
     for ptFiles in list_ptFIles:
         my_tensor = torch.load(directory_float + ptFiles)

@@ -14,7 +14,6 @@ from mean_pixel_value import *
 from plot_error import Plot_Error
 from float_mask import *
 
-
 # first of all we get the model trained with model's data
 path_model = 'model/model2015/'
 list_avaiable_models = os.listdir(path_model)
@@ -43,15 +42,14 @@ for el in range(len(weight_float)):
     weight_float[el] = weight_float[el][:, :, 1:-1, :, 1:-1]
 
 index_test = -1
-testing_x = test_dataset[index_test]
+testing_x = train_dataset[index_test]
 testing_weight = weight_float[index_test]
 
 mean_value_pixel = MV_pixel(test_dataset)
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
 
-# parameters for the second train routine
-lr_c = 0.00001
-epoch1 = 50  # number of step for the first phase of training
+lr_c = 0.001
+epoch1 = 20  # number of step for the first phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 5, 10
 hole_min_h, hole_max_h = 10, 20
@@ -66,8 +64,8 @@ path_lr = path_configuration + '/' + str(lr_c)
 if not os.path.exists(path_lr):
     os.mkdir(path_lr)
 
-losses_1_c = []  # losses of the completion network during phase 1
-losses_1_c_test = []  # losses of TEST of the completion network during phase 1
+losses_1_c = []  # losses of the completion network
+losses_1_c_test = []  # losses of TEST of the completion network
 
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
 optimizer_completion = Adadelta(model_completion.parameters(), lr=lr_c)
@@ -126,58 +124,18 @@ for ep in range(epoch1):
             display.clear_output(wait=True)
             f_test.write(f"[EPOCH]: {ep + 1}, [LOSS]: {loss_1c_test.item():.5e} \n")
 
-            path_tensor = path_lr + '/tensor/'
-            if not os.path.exists(path_tensor):
-                os.mkdir(path_tensor)
-            path_fig = path_lr + '/fig/'
-            if not os.path.exists(path_fig):
-                os.mkdir(path_fig)
+# save the model
 
-            path_tensor_epoch = path_tensor + 'epoch_' + str(ep)
-            if not os.path.exists(path_tensor_epoch):
-                os.mkdir(path_tensor_epoch)
-            torch.save(testing_output, path_tensor_epoch + "/tensor_phase1" + ".pt")
-
-            path_fig_epoch = path_fig + 'epoch_' + str(ep)
-            if not os.path.exists(path_fig_epoch):
-                os.mkdir(path_fig_epoch)
-
-            path_fig_original = path_fig + 'original_fig'
-            if not os.path.exists(path_fig_original):
-                os.mkdir(path_fig_original)
-
-            number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
-
-            for channel in channels:
-                for i in range(number_fig):
-                    path_fig_channel = path_fig_epoch + '/' + str(channel)
-                    if not os.path.exists(path_fig_channel):
-                        os.mkdir(path_fig_channel)
-                    cmap = plt.get_cmap('Greens')
-                    plt.imshow(testing_output[0, channel, i, :, :], cmap=cmap)
-                    plt.colorbar()
-                    plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
-                    plt.close()
-
-                    if ep == 0:
-                        path_fig_channel = path_fig_original + '/' + str(channel)
-                        if not os.path.exists(path_fig_channel):
-                            os.mkdir(path_fig_channel)
-                        plt.imshow(testing_x[0, channel, i, :, :], cmap=cmap)
-                        plt.colorbar()
-                        plt.savefig(path_fig_channel + "/profundity_level_original_" + str(i) + ".png")
-                        plt.close()
+path_model = 'model/float/model_completion_' + 'epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt '
+torch.save(model_completion.state_dict(), path_model)
 
 f.close()
 f_test.close()
-Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
+Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the test error
 
+print('final loss TRAINING : ', losses_1_c[-1])  # printing final loss training set
 
-# printing final loss training set
-print('final loss TRAINING : ', losses_1_c[-1])
-
-# printing final loss of testing set
-print('final loss TEST : ', losses_1_c_test[-1])
+print('final loss TEST : ', losses_1_c_test[-1])  # printing final loss of testing set
 
 print('model used : ', name_model)
 print('learning rate used for the float data training : ', lr_c)
