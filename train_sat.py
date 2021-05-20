@@ -50,8 +50,8 @@ testing_weight = weight_sat[index_test]
 mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
 
-lr_c = 0.01
-epoch1 = 10  # number of step for the first phase of training
+lr_c = 1e-04
+epoch1 = 50  # number of step for the first phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 28, 29
 hole_min_h, hole_max_h = 30, 50
@@ -191,7 +191,7 @@ torch.save(model_completion.state_dict(), path_model)
 f.close()
 f_test.close()
 
-Plot_Error(losses_test, '1c', path_lr + '/')  # plot of the error on sat data
+Plot_Error(losses_test, 'sat', path_lr + '/')  # plot of the error on sat data
 
 # printing final loss training set
 print('final loss TRAINING : ', losses[-1])

@@ -48,8 +48,8 @@ testing_weight = weight_float[index_test]
 mean_value_pixel = MV_pixel(test_dataset)
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
 
-lr_c = 0.001
-epoch1 = 20  # number of step for the first phase of training
+lr_c = 1e-04
+epoch1 = 50  # number of step for the first phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 5, 10
 hole_min_h, hole_max_h = 10, 20
@@ -131,7 +131,7 @@ torch.save(model_completion.state_dict(), path_model)
 
 f.close()
 f_test.close()
-Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the test error
+Plot_Error(losses_1_c_test, 'float', path_lr + '/')  # plot of the test error
 
 print('final loss TRAINING : ', losses_1_c[-1])  # printing final loss training set
 

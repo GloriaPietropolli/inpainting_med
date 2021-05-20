@@ -2,77 +2,44 @@
 Plotting the error during the different phase of the training
 """
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
 import numpy as np
 
 
 def Plot_Error(losses, flag, path):
-    if flag == '1c':
-        label = 'losses' + flag
-        plt.plot(losses, '-r', label=label)
-        plt.xlabel('number iteration phase1')
-        plt.title('TEST COMPLETION LOSS PHASE 1')
-        plt.legend()
-        plt.savefig(path + "_LOSS_1C.png")
-        plt.close()
+    """
+    plot of the losses
+    flag : what phase of the training we are plotting
+    path : where to save the plot
+    """
+    flag_dict = {'1c': 'model completion at phase 1',
+                 '2d': 'model discriminator at phase 2',
+                 '3c': 'model completion phase at 3',
+                 '3d': 'model completion phase at 3',
+                 'float': 'float completion',
+                 'sat': 'sat completion'}
+    descr = flag_dict[flag]
 
-        label = 'log losses ' + flag
-        plt.plot(np.log(losses), '-r', label=label)
-        plt.xlabel('number iteration phase1')
-        plt.title('TEST COMPLETION LOG LOSS PHASE 1')
-        plt.legend()
-        plt.savefig(path + "_LOSS_LOG_1C.png")
-        plt.close()
+    label = 'losses'
 
-    if flag == '2d':
-        label = 'losses ' + flag
-        plt.plot(losses, '-r', label=label)
-        plt.xlabel('number iteration phase2')
-        plt.title('DISCRIMINATOR LOSS PHASE 2')
-        plt.legend()
-        plt.savefig(path + "_LOSS_2D.png")
-        plt.close()
+    figure(figsize=(10, 6))
 
-        label = 'log losses ' + flag
-        plt.plot(np.log(losses), '-r', label=label)
-        plt.xlabel('number iteration phase2')
-        plt.title('DISCRIMINATOR LOG LOSS PHASE 2')
-        plt.legend()
-        plt.savefig(path + "_LOSS_LOG_2D.png")
-        plt.close()
+    plt.plot(losses, 'orange')
+    plt.plot(losses, 'm.', label=label)
+    plt.xlabel('Number of epochs')
+    plt.title('Losses of ' + descr)
+    plt.legend()
+    plt.savefig(path + "loss_" + str(flag) + ".png")
+    plt.close()
 
-    if flag == '3c':
-        label = 'losses ' + flag
-        plt.plot(losses, '-r', label=label)
-        plt.xlabel('number iteration phase3')
-        plt.title('TEST COMPLETION LOSS PHASE 3')
-        plt.legend()
-        plt.savefig(path + "_LOSS_3C.png")
-        plt.close()
-
-        label = 'log losses ' + flag
-        plt.plot(np.log(losses), '-r', label=label)
-        plt.xlabel('number iteration phase3')
-        plt.title('TEST COMPLETION LOG LOSS PHASE 3')
-        plt.legend()
-        plt.savefig(path + "_LOSS_LOG_3C.png")
-        plt.close()
-
-    if flag == '3d':
-        label = 'losses ' + flag
-        plt.plot(losses, '-r', label=label)
-        plt.xlabel('number iteration phase3')
-        plt.title('DISCRIMINATOR LOSS PHASE 3')
-        plt.legend()
-        plt.savefig(path + "_LOSS3D.png")
-        plt.close()
-
-        label = 'log losses ' + flag
-        plt.plot(np.log(losses), '-r', label=label)
-        plt.xlabel('number iteration phase2')
-        plt.title('DISCRIMINATOR LOG LOSS PHASE 3')
-        plt.legend()
-        plt.savefig(path + "_LOSS_LOG_3D.png")
-        plt.close()
+    label = 'log losses '
+    plt.plot(np.log(losses), 'orange')
+    plt.plot(np.log(losses), 'm.', label=label)
+    plt.xlabel('Number of epochs')
+    plt.title('Logarithmic Losses of ' + descr)
+    plt.legend()
+    plt.savefig(path + "LOGloss_" + str(flag) + ".png")
+    plt.close()
 
 
 def Plot_Adversarial_Error(losses_c, losses_d, path):
