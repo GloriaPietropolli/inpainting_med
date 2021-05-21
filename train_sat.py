@@ -168,7 +168,7 @@ for ep in range(epoch):
 
             number_fig = len(testing_output[0, 0, :, 0, 0])  # number of levels of depth
 
-            for channel in channels:
+            for channel in [0, 1, 2, 3]:
                 for i in range(number_fig):
                     path_fig_channel = path_fig_epoch + '/' + str(channel)
                     if not os.path.exists(path_fig_channel):

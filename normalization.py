@@ -36,7 +36,7 @@ def Normalization_Float(list_tensor, mean_tensor, std_tensor):
 
 def Normalization_Sat(list_tensor, mean_tensor, std_tensor):
     """
-    normalization routine for FLOAT data
+    normalization routine for SAT data
     """
     normalized_list = []
     for tensor in list_tensor:
