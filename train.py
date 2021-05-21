@@ -13,7 +13,6 @@ from mean_pixel_value import MV_pixel
 from utils import generate_input_mask, generate_hole_area, crop
 from normalization import Normalization
 from plot_error import Plot_Error
-from dumb_list import *
 from get_dataset import *
 
 num_channel = number_channel  # 0,1,2,3
@@ -29,18 +28,17 @@ testing_x = train_dataset[index_testing]  # test on the last element of the list
 train_dataset.pop(index_testing)
 
 mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
-mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))  # transform the mean_value_pixel
-# (an array of length 3) into a tensor of the same shape as the input's ones
+mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.0001
-lr_d = 0.0001
+lr_c = 0.001
+lr_d = 0.001
 alpha = torch.tensor(alpha)
 num_test_completions = 10
-epoch1 = 1000  # number of step for the first phase of training
-epoch2 = 500  # number of step for the second phase of training
-epoch3 = 1000  # number of step for the third phase of training
+epoch1 = 250  # number of step for the first phase of training
+epoch2 = 200  # number of step for the second phase of training
+epoch3 = 500  # number of step for the third phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
@@ -62,9 +60,7 @@ losses_3_c = []  # losses of the completion network during phase 3
 losses_3_d = []  # losses of the discriminator network during phase 3
 
 losses_1_c_test = []  # losses of TEST of the completion network during phase 1
-losses_2_d_test = []  # losses of TEST of the discriminator network during phase 2
 losses_3_c_test = []  # losses of TEST of the completion network during phase 3
-losses_3_d_test = []  # losses of TEST of the discriminator network during phase 3
 
 # PHASE 1
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
@@ -162,6 +158,7 @@ for ep in range(epoch1):
 
 f.close()
 f_test.close()
+
 Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
 # PHASE 2
@@ -211,6 +208,7 @@ for ep in range(epoch2):
         optimizer_discriminator.zero_grad()
 
 f.close()
+
 Plot_Error(losses_2_d, '2d', path_lr + '/')
 
 # PHASE 3
@@ -333,7 +331,9 @@ path_model = 'model/model2015/model_completion_' + 'epoch_' + str(epoch1) + '_' 
 torch.save(model_completion.state_dict(), path_model)
 
 f.close()
+
 Plot_Error(losses_3_c_test, '3c', path_lr + '/')
+Plot_Error(losses_3_d, '3d', path_lr + '/')
 
 # printing specifics of the problem
 print('epoch phase 1 : ', epoch1, ' -- epoch phase 2 : ', epoch2, ' -- epoch phase 3 : ', epoch3)

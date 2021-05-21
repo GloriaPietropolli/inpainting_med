@@ -46,6 +46,6 @@ def masked_sat_tensor(tensor, mean_value_pixel, mask):
     tensor_masked_3 = tensor[:, 3:, :, :, :] - tensor[:, 3:, :, :, :] * mask + mean_value_pixel[:, -1:,
                                                                                            :, :, :] * tensor[:,
                                                                                                       3:, :, :, :]
-    training_x_masked = torch.cat((tensor_masked_02, tensor_masked_3), dim=1)
+    tensor = torch.cat((tensor_masked_02, tensor_masked_3), dim=1)
     return tensor
 
