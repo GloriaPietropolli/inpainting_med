@@ -35,6 +35,8 @@ def Plot_Error(losses, flag, path):
     plt.savefig(path + "loss_" + str(flag) + ".png")
     plt.close()
 
+    figure(figsize=(10, 6))
+
     label = 'log losses '
     plt.plot(np.log(losses), 'orange')
     plt.plot(np.log(losses), 'm.', label=label)
