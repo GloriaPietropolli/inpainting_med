@@ -25,24 +25,27 @@ index_testing = -1
 
 train_dataset, _, _ = Normalization(train_dataset)
 testing_x = train_dataset[index_testing]  # test on the last element of the list
-train_dataset.pop(index_testing)
+# train_dataset.pop(index_testing)
 
 mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.001
-lr_d = 0.001
+lr_c = 0.1
+lr_d = 0.1
 alpha = torch.tensor(alpha)
-num_test_completions = 10
-epoch1 = 250  # number of step for the first phase of training
-epoch2 = 200  # number of step for the second phase of training
-epoch3 = 500  # number of step for the third phase of training
+num_test_completions = 0
+epoch1 = 50  # number of step for the first phase of training
+epoch2 = 50  # number of step for the second phase of training
+epoch3 = 50  # number of step for the third phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
+hole_min_d1, hole_max_d1 = 25, 28  # different hole size for the first training (no local discriminator here)
+hole_min_h1, hole_max_h1 = 5, 15
+hole_min_w1, hole_max_w1 = 5, 15
 cn_input_size = (29, 65, 73)
 ld_input_size = (20, 50, 50)
 
@@ -73,7 +76,7 @@ for ep in range(epoch1):
     for training_x in train_dataset:
         mask = generate_input_mask(
             shape=(training_x.shape[0], 1, training_x.shape[2], training_x.shape[3], training_x.shape[4]),
-            hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w))
+            hole_size=(hole_min_d1, hole_max_d1, hole_min_h1, hole_max_h1, hole_min_w1, hole_max_w1))
         training_x_masked = training_x - training_x * mask + mean_value_pixel * mask  # mask the training tensor with
         # pixel containing the mean value
         input = torch.cat((training_x_masked, mask), dim=1)
@@ -97,9 +100,9 @@ for ep in range(epoch1):
             # testing_x = random.choice(test_dataset)
             training_mask = generate_input_mask(
                 shape=(testing_x.shape[0], 1, testing_x.shape[2], testing_x.shape[3], testing_x.shape[4]),
-                hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w),
-                hole_area=generate_hole_area(ld_input_size,
-                                             (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
+                hole_size=(hole_min_d1, hole_max_d1, hole_min_h1, hole_max_h1, hole_min_w1, hole_max_w1))
+            # hole_area=generate_hole_area(ld_input_size,
+            #                              (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
             testing_x_mask = testing_x - testing_x * training_mask + mean_value_pixel * training_mask
             testing_input = torch.cat((testing_x_mask, training_mask), dim=1)
             testing_output = model_completion(testing_input.float())

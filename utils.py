@@ -38,7 +38,7 @@ def generate_input_mask(shape, hole_size, hole_area=None, number_holes=1):
 
 def generate_hole_area(size, mask_size):
     """
-    total_size = total size of the area (D,H,W)
+    size = total size of the area (D,H,W)
     mask_size = size of the input mask
     """
     mask_d, mask_h, mask_w = mask_size
