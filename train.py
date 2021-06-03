@@ -25,27 +25,27 @@ index_testing = -1
 
 train_dataset, _, _ = Normalization(train_dataset)
 testing_x = train_dataset[index_testing]  # test on the last element of the list
-# train_dataset.pop(index_testing)
+train_dataset.pop(index_testing)
 
 mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.1
-lr_d = 0.1
+lr_c = 0.001
+lr_d = 0.001
 alpha = torch.tensor(alpha)
 num_test_completions = 0
-epoch1 = 50  # number of step for the first phase of training
-epoch2 = 50  # number of step for the second phase of training
-epoch3 = 50  # number of step for the third phase of training
-snaperiod = 1
+epoch1 = 750  # number of step for the first phase of training
+epoch2 = 100  # number of step for the second phase of training
+epoch3 = 250  # number of step for the third phase of training
+snaperiod = 20
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
-hole_min_d1, hole_max_d1 = 25, 28  # different hole size for the first training (no local discriminator here)
-hole_min_h1, hole_max_h1 = 5, 15
-hole_min_w1, hole_max_w1 = 5, 15
+hole_min_d1, hole_max_d1 = 27, 28  # different hole size for the first training (no local discriminator here)
+hole_min_h1, hole_max_h1 = 1, 50
+hole_min_w1, hole_max_w1 = 1, 50
 cn_input_size = (29, 65, 73)
 ld_input_size = (20, 50, 50)
 
