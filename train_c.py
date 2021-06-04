@@ -31,19 +31,18 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.1
+lr_c = 1e-3
 alpha = torch.tensor(alpha)
 num_test_completions = 0
-epoch1 = 10  # number of step for the first phase of training
-snaperiod = 20
-hole_min_d, hole_max_d = 10, 20
-hole_min_h, hole_max_h = 30, 50
-hole_min_w, hole_max_w = 30, 50
-hole_min_d1, hole_max_d1 = 27, 28  # different hole size for the first training (no local discriminator here)
+epoch1 = 1500  # number of step for the first phase of training
+snaperiod = 25
+hole_min_d1, hole_max_d1 = 28, 29  # different hole size for the first training (no local discriminator here)
 hole_min_h1, hole_max_h1 = 1, 50
 hole_min_w1, hole_max_w1 = 1, 50
-cn_input_size = (29, 65, 73)
-ld_input_size = (20, 50, 50)
+hole_min_d2, hole_max_d2 = 10, 20
+hole_min_h2, hole_max_h2 = 30, 50
+hole_min_w2, hole_max_w2 = 30, 50
+snaperiod_hole = 2
 
 # make directory
 path_configuration = path + '/' + str(epoch1) + '_epoch'
@@ -66,11 +65,20 @@ f = open(path_lr + "/phase1_losses.txt", "w+")
 f_test = open(path_lr + "/phase1_TEST_losses.txt", "w+")
 for ep in range(epoch1):
     for training_x in train_dataset:
+        if ep % snaperiod_hole == 0:
+            hole_min_d, hole_max_d = hole_min_d1, hole_max_d1
+            hole_min_h, hole_max_h = hole_min_h1, hole_max_h1
+            hole_min_w, hole_max_w = hole_min_w1, hole_max_w1
+        else:
+            hole_min_d, hole_max_d = hole_min_d2, hole_max_d2
+            hole_min_h, hole_max_h = hole_min_h2, hole_max_h2
+            hole_min_w, hole_max_w = hole_min_w2, hole_max_w2
+
         mask = generate_input_mask(
             shape=(training_x.shape[0], 1, training_x.shape[2], training_x.shape[3], training_x.shape[4]),
-            hole_size=(hole_min_d1, hole_max_d1, hole_min_h1, hole_max_h1, hole_min_w1, hole_max_w1))
-        training_x_masked = training_x - training_x * mask + mean_value_pixel * mask  # mask the training tensor with
-        # pixel containing the mean value
+            hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w))
+        training_x_masked = training_x - training_x * mask + mean_value_pixel * mask
+
         input = torch.cat((training_x_masked, mask), dim=1)
         output = model_completion(input.float())
 
@@ -92,7 +100,7 @@ for ep in range(epoch1):
             # testing_x = random.choice(test_dataset)
             training_mask = generate_input_mask(
                 shape=(testing_x.shape[0], 1, testing_x.shape[2], testing_x.shape[3], testing_x.shape[4]),
-                hole_size=(hole_min_d1, hole_max_d1, hole_min_h1, hole_max_h1, hole_min_w1, hole_max_w1))
+                hole_size=(hole_min_d, hole_max_d, hole_min_h, hole_max_h, hole_min_w, hole_max_w))
             # hole_area=generate_hole_area(ld_input_size,
             #                              (training_x.shape[2], training_x.shape[3], training_x.shape[4])))
             testing_x_mask = testing_x - testing_x * training_mask + mean_value_pixel * training_mask
@@ -109,7 +117,7 @@ for ep in range(epoch1):
             path_tensor = path_lr + '/tensor/'
             if not os.path.exists(path_tensor):
                 os.mkdir(path_tensor)
-            path_fig = path_phase + '/fig/'
+            path_fig = path_lr + '/fig/'
             if not os.path.exists(path_fig):
                 os.mkdir(path_fig)
 
@@ -163,6 +171,6 @@ print('epoch phase 1 : ', epoch1)
 print('learning rate completion : ', lr_c)
 
 # printing final loss training set
-print('final loss of completion    network at phase 1 : ', losses_1_c[-1])
+print('final loss of TRAINING completion network: ', losses_1_c[-1])
 # printing final loss of testing set
-print('final loss TEST at phase 1 : ', losses_1_c_test[-1])
+print('final loss TEST : ', losses_1_c_test[-1].item())
