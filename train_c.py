@@ -1,16 +1,14 @@
 """
-Implementation of the training routine for the 3D CNN with GAN
+Implementation of the training routine for the 3D CNN without GAN
 - train_dataset : list/array of 5D (or 5D ?) tensor in form (bs, input_channels, D_in, H_in, W_in)
 """
-import torch.nn as nn
 from torch.optim import Adadelta
 import matplotlib.pyplot as plt
 from IPython import display
-from discriminator import Discriminator
 from completion import CompletionN
 from losses import completion_network_loss
 from mean_pixel_value import MV_pixel
-from utils import generate_input_mask, generate_hole_area, crop
+from utils import generate_input_mask
 from normalization import Normalization
 from plot_error import Plot_Error
 from get_dataset import *
@@ -31,11 +29,11 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 1e-3
+lr_c = 1e-2
 alpha = torch.tensor(alpha)
 num_test_completions = 0
-epoch1 = 1500  # number of step for the first phase of training
-snaperiod = 25
+epoch1 = 501  # number of step for the first phase of training
+snaperiod = 10
 hole_min_d1, hole_max_d1 = 28, 29  # different hole size for the first training (no local discriminator here)
 hole_min_h1, hole_max_h1 = 1, 50
 hole_min_w1, hole_max_w1 = 1, 50
@@ -94,7 +92,7 @@ for ep in range(epoch1):
         optimizer_completion.step()
 
     # test
-    if ep % snaperiod == 0:
+    if ep % snaperiod == 0 or ep == epoch1 - 1:
         model_completion.eval()
         with torch.no_grad():
             # testing_x = random.choice(test_dataset)
@@ -148,6 +146,11 @@ for ep in range(epoch1):
                     plt.close()
 
                     if ep == 0:
+                        path_testing_x = path_tensor + '/testing_x/'
+                        if not os.path.exists(path_testing_x):
+                            os.mkdir(path_testing_x)
+                        torch.save(testing_x, path_testing_x + "original_tensor" + ".pt")
+
                         path_fig_channel = path_fig_original + '/' + str(channel)
                         if not os.path.exists(path_fig_channel):
                             os.mkdir(path_fig_channel)

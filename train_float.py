@@ -15,9 +15,10 @@ from plot_error import Plot_Error
 from float_mask import *
 
 # first of all we get the model trained with model's data
-path_model = 'model/model2015/'
+path_model = 'model/model2015_c/'
 list_avaiable_models = os.listdir(path_model)
-select_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01.pt '
+select_model = 'model_completion_epoch_500_lrc_0.01.pt '  # select_model = 'model_completion_epoch_250_150_150_lrc_0
+# .01_lrd_0.01.pt '
 name_model = select_model[:-3]
 print('model used : ', name_model)
 
@@ -142,10 +143,8 @@ for ep in range(epoch):
             if not os.path.exists(path_fig):
                 os.mkdir(path_fig)
 
-            path_tensor_epoch = path_tensor + 'epoch_' + str(ep)
-            if not os.path.exists(path_tensor_epoch):
-                os.mkdir(path_tensor_epoch)
-            torch.save(testing_output, path_tensor_epoch + "/tensor" + ".pt")
+            path_tensor_epoch = path_tensor + 'epoch_' + str(ep) + ".pt"
+            torch.save(testing_output, path_tensor_epoch)
 
             path_fig_epoch = path_fig + 'epoch_' + str(ep)
             if not os.path.exists(path_fig_epoch):

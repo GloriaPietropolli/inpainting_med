@@ -15,9 +15,9 @@ from mean_pixel_value import *
 from plot_error import Plot_Error
 
 # first of all we get the model trained with model's data
-path_model = 'model/model2015/'
+path_model = 'model/model2015_c/'
 list_avaiable_models = os.listdir(path_model)
-select_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01.pt '
+select_model = 'model_completion_epoch_500_lrc_0.01.pt '
 name_model = select_model[:-3]
 print('model used : ', name_model)
 
@@ -153,10 +153,8 @@ for ep in range(epoch):
             if not os.path.exists(path_fig):
                 os.mkdir(path_fig)
 
-            path_tensor_epoch = path_tensor + 'epoch_' + str(ep)
-            if not os.path.exists(path_tensor_epoch):
-                os.mkdir(path_tensor_epoch)
-            torch.save(testing_output, path_tensor_epoch + "/tensor_phase1" + ".pt")
+            path_tensor_epoch = path_tensor + 'epoch_' + str(ep) + ".pt"
+            torch.save(testing_output, path_tensor_epoch)
 
             path_fig_epoch = path_fig + 'epoch_' + str(ep)
             if not os.path.exists(path_fig_epoch):
@@ -188,7 +186,7 @@ for ep in range(epoch):
                         plt.savefig(path_fig_channel + "/profundity_level_original_" + str(i) + ".png")
                         plt.close()
 
-path_model = 'model/sat/model_completion_FLOAT_' + str(epoch) + '_epoch_' + str(lr) + '_lr.pt'
+path_model = 'model/sat/model_completion_SAT_' + str(epoch) + '_epoch_' + str(lr) + '_lr.pt'
 torch.save(model_completion.state_dict(), path_model)
 
 f.close()
