@@ -50,7 +50,7 @@ if analysis == 'float':
 
 
 if analysis == 'model':
-    epoch_model = 10
+    epoch_model = 501
     lr_model = 0.01
 
     path = os.getcwd()
