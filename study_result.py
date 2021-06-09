@@ -2,14 +2,14 @@ import os
 import torch
 import matplotlib.pyplot as plt
 
-analysis = 'model'
+analysis = 'float'
 
 if analysis == 'float':
-    epoch_model = 500
+    epoch_model = 501
     lr_model = 0.01
 
     epoch_float = 50
-    lr_float = 0.0001
+    lr_float = 0.1
 
     path = os.getcwd()
     model_considered = 'model_completion_epoch_' + str(epoch_model) + '_lrc_' + str(lr_model) + '.'
@@ -50,7 +50,7 @@ if analysis == 'float':
 
 
 if analysis == 'model':
-    epoch_model = 501
+    epoch_model = 501  # select the model we want to analyze
     lr_model = 0.01
 
     path = os.getcwd()
@@ -61,11 +61,13 @@ if analysis == 'model':
 
     for i in range(len(models)):
         epoch_directory = models[i]
-        epoch = epoch_directory[-2:]
+        epoch = epoch_directory[-3:]
 
-        model = torch.load(path_model + epoch_directory + '/tensor_phase1.pt')
-        if not os.path.exists(model):
+        path_epoch = path_model + epoch_directory + '/tensor_phase1.pt'
+        if not os.path.exists(path_epoch):
             continue
+
+        model = torch.load(path_epoch)
         data = torch.load(path_model + '/testing_x/original_tensor.pt')
 
         print('calculating distance among epoch ' + str(epoch) + ' ...')
@@ -77,6 +79,10 @@ if analysis == 'model':
         path_fig_epoch = path_fig + '/epoch' + epoch
         if not os.path.exists(path_fig_epoch):
             os.mkdir(path_fig_epoch)
+        else:
+            continue
+
+        torch.save(diff, path_fig_epoch + '/diff.pt')
 
         number_fig = len(diff[0, 0, :, 0, 0])  # number of levels of depth
 
@@ -90,4 +96,3 @@ if analysis == 'model':
                 plt.colorbar()
                 plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
                 plt.close()
-

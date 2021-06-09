@@ -17,7 +17,7 @@ from float_mask import *
 # first of all we get the model trained with model's data
 path_model = 'model/model2015_c/'
 list_avaiable_models = os.listdir(path_model)
-select_model = 'model_completion_epoch_500_lrc_0.01.pt '  # select_model = 'model_completion_epoch_250_150_150_lrc_0
+select_model = 'model_completion_epoch_501_lrc_0.01.pt '  # select_model = 'model_completion_epoch_250_150_150_lrc_0
 # .01_lrd_0.01.pt '
 name_model = select_model[:-3]
 print('model used : ', name_model)
@@ -50,8 +50,8 @@ testing_weight = weight_float[index_test]
 mean_value_pixel = MV_pixel(test_dataset)
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
 
-lr = 1e-04
-epoch = 50  # number of step for the first phase of training
+lr = 1e-01
+epoch = 10  # number of step for the first phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 5, 10
 hole_min_h, hole_max_h = 10, 20
@@ -171,7 +171,7 @@ for ep in range(epoch):
                         path_fig_channel = path_fig_original + '/' + str(channel)
                         if not os.path.exists(path_fig_channel):
                             os.mkdir(path_fig_channel)
-                        plt.imshow(testing_x_model[0, channel, i, :, :], cmap=cmap)
+                        plt.imshow(testing_x[0, channel, i, :, :], cmap=cmap)
                         plt.colorbar()
                         plt.savefig(path_fig_channel + "/profundity_level_original_" + str(i) + ".png")
                         plt.close()
