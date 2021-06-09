@@ -1,6 +1,7 @@
 import torch
 import netCDF4 as nc
 import os
+import numpy as np
 from datetime import date, timedelta
 
 path = os.getcwd() + '/emodnet/'
@@ -23,7 +24,7 @@ start = date(1911, 1, 1)
 observation_2015 = []
 
 
-def preparation_data_single_station2(i):  # i=number of stations
+def preparation_data_single_station2(i, param):  # i=number of stations
     if typez[i] == b'B':  # se il dato è di tipo bottiglia
         data_single_station = torch.zeros(n_samples, n_input + n_output)
 
@@ -35,7 +36,13 @@ def preparation_data_single_station2(i):  # i=number of stations
             print('year ' + str(offset.year) + ' out of range')
             return None
         else:
-            data_single_station[:, 0] = datetime[i] * torch.ones(n_samples)
+            year = offset.year
+            month = offset.month
+            month = month - 1
+            day = offset.day
+            week = np.int(month * 4 + day / 7)
+            date_time = year + 0.01 * week
+            data_single_station[:, 0] = date_time * torch.ones(n_samples)
 
         if not 36 < latitude[i] < 44:
             print('latitude ' + str(latitude[i]) + ' out of range')
@@ -54,23 +61,29 @@ def preparation_data_single_station2(i):  # i=number of stations
         data_single_station[:, 5] = torch.from_numpy(doxy[i, :])
         data_single_station[:, 6] = torch.from_numpy(chl[i, :])
 
-        data_single_station = data_single_station[data_single_station[:, 3] > absence_flag]
+        if 'temperature' in param:
+            data_single_station = data_single_station[data_single_station[:, 3] > absence_flag]
+
         data_single_station = data_single_station[data_single_station[:, 4] > absence_flag]
-        data_single_station = data_single_station[data_single_station[:, 5] > absence_flag]
-        data_single_station = data_single_station[data_single_station[:, 6] > absence_flag]
+
+        if 'doxy' in param:
+            data_single_station = data_single_station[data_single_station[:, 5] > absence_flag]
+        if 'chl' in param:
+            data_single_station = data_single_station[data_single_station[:, 6] > absence_flag]
 
         return data_single_station
 
 
-def merge_data_stations(n_stations_considered):
+def merge_data_stations(n_stations_considered, param):
     my_data = torch.zeros(1, n_input + n_output)
     for i in range(0, n_stations_considered):
-        data_to_add = preparation_data_single_station2(i)
+        data_to_add = preparation_data_single_station2(i, param)
         if data_to_add is not None:
             my_data = torch.cat((my_data, data_to_add), 0)
     return my_data
 
 
-emodnet = merge_data_stations(n_stations)
-print(emodnet.shape)
-torch.save(emodnet, path + 'emodnet2015.pt')
+variable = 'temperature'
+emodnet = merge_data_stations(n_stations, variable)
+# print(emodnet.shape)
+torch.save(emodnet, path + 'emodnet2015_' + variable + '.pt')
