@@ -11,7 +11,7 @@ from mean_pixel_value import MV_pixel
 from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution
 
-variable = 'temperature'
+variable = 'salinity'
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
 
@@ -64,6 +64,7 @@ if where == 'model2015_c/':
     lr_model) + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
 
 emodnet = torch.load(path_emodnet)
+print(emodnet.shape)
 
 model = CompletionN()
 model.load_state_dict(torch.load(path_model))  # network trained only with model information
@@ -73,14 +74,17 @@ model_float = CompletionN()
 model_float.load_state_dict(torch.load(path_model_float))  # network adjusted with float information
 model_float.eval()
 
-win3_m, win3_f, win3_d = 0, 0, 0
+
 win2_m, win2_f = 0, 0
+win3_m, win3_f, win3_d = 0, 0, 0
+diff2_m_, diff2_f_ = [], []
+diff3_m_, diff3_f_, diff3_d_ = [], [], []
 
 path_fig = os.getcwd() + '/emodnet/' + variable + '_comparison_between_' + name_model + '_and_floatmodel_' + str(epoch_float) + '_' + str(lr_float)
 if not os.path.exists(path_fig):
     os.mkdir(path_fig)
 
-f = open(path_fig + "/phase1_losses.txt", "w+")
+f = open(path_fig + "/differences.txt", "w+")
 # f.write(f"[MODEL CONSIDERED]: " + name_model + " \n")
 for i in range(emodnet.shape[0]):  # for every sample considered
     datetime = round(emodnet[i, 0].item(), 2)
@@ -109,8 +113,10 @@ for i in range(emodnet.shape[0]):  # for every sample considered
     if variable == 'temperature':
         emodnet_unkn = emodnet_result[3].item()
     if variable == 'oxygen':
-        emodnet_unkn = emodnet_result[-2].item()
+        emodnet_unkn = emodnet_result[-3].item()
     if variable == 'chla':
+        emodnet_unkn = emodnet_result[-2].item()
+    if variable == 'salinity':
         emodnet_unkn = emodnet_result[-1].item()
 
     mean_unkn = mean_model[0, dict_channel[variable], 0, 0, 0]
@@ -152,7 +158,6 @@ for i in range(emodnet.shape[0]):  # for every sample considered
         win2_m = win2_m + 1
 
     if i % snaperiod == 0:
-
         plt.bar(np.arange(3), height=[win3_d, win3_m, win3_f])
         plt.xticks(np.arange(3), ['data', 'model', 'float'])
         path_fig3 = path_fig + '/3comp'
@@ -179,5 +184,6 @@ for i in range(emodnet.shape[0]):  # for every sample considered
     f.write(f"[DATA]   : {unkn_data.item():.5e} \n")
     f.write(f"[MODEL]  : {unkn_model.item():.5e} \n")
     f.write(f"[FLOAT]  : {unkn_float.item():.5e} \n")
+
 f.close()
 

@@ -15,10 +15,11 @@ temperature = ds['var2'][:].data
 depth = ds['var1'][:].data
 doxy = ds['var4'][:].data
 chl = ds['var12'][:].data
+psal = ds['var3'][:].data
 typez = ds['metavar3'][:].data
 
 n_samples, n_stations = 8167, 60876
-n_input, n_output = 7, 0
+n_input, n_output = 8, 0
 absence_flag = -10 ** 10
 start = date(1911, 1, 1)
 observation_2015 = []
@@ -60,12 +61,15 @@ def preparation_data_single_station2(i, param):  # i=number of stations
         data_single_station[:, 4] = torch.from_numpy(depth[i, :])
         data_single_station[:, 5] = torch.from_numpy(doxy[i, :])
         data_single_station[:, 6] = torch.from_numpy(chl[i, :])
+        data_single_station[:, 7] = torch.from_numpy(psal[i, :])
 
         if 'temperature' in param:
             data_single_station = data_single_station[data_single_station[:, 3] > absence_flag]
 
         data_single_station = data_single_station[data_single_station[:, 4] > absence_flag]
 
+        if 'psal' in param:
+            data_single_station = data_single_station[data_single_station[:, 7] > absence_flag]
         if 'doxy' in param:
             data_single_station = data_single_station[data_single_station[:, 5] > absence_flag]
         if 'chl' in param:
@@ -83,7 +87,8 @@ def merge_data_stations(n_stations_considered, param):
     return my_data
 
 
-variable = 'temperature'
+variable = ['temperature', 'doxy', 'psal']
 emodnet = merge_data_stations(n_stations, variable)
 # print(emodnet.shape)
-torch.save(emodnet, path + 'emodnet2015_' + variable + '.pt')
+torch.save(emodnet, path + 'emodnet2015.pt')
+print(emodnet.shape)

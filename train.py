@@ -32,8 +32,8 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.005
-lr_d = 0.005
+lr_c = 0.001
+lr_d = 0.001
 alpha = torch.tensor(alpha)
 num_test_completions = 0
 epoch1 = 1500  # number of step for the first phase of training
@@ -161,6 +161,11 @@ for ep in range(epoch1):
 
 f.close()
 f_test.close()
+
+path_model = 'model/model2015/model_ONLY_PHASE1_completion_' + 'epoch_' + str(epoch1) + '_' + str(
+    epoch3) + '_lrc_' + str(lr_c) + '.pt '
+torch.save(model_completion.state_dict(), path_model)
+torch.save(model_completion.state_dict(), path_lr + '/')
 
 Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
