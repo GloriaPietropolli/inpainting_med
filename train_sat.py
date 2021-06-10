@@ -178,6 +178,11 @@ for ep in range(epoch):
                     plt.close()
 
                     if ep == 0:
+                        path_testing_x = path_tensor + '/testing_x/'
+                        if not os.path.exists(path_testing_x):
+                            os.mkdir(path_testing_x)
+                        torch.save(testing_x, path_testing_x + "original_tensor" + ".pt")
+
                         path_fig_channel = path_fig_original + '/' + str(channel)
                         if not os.path.exists(path_fig_channel):
                             os.mkdir(path_fig_channel)
@@ -188,6 +193,7 @@ for ep in range(epoch):
 
 path_model = 'model/sat/model_completion_SAT_' + str(epoch) + '_epoch_' + str(lr) + '_lr.pt'
 torch.save(model_completion.state_dict(), path_model)
+torch.save(model_completion.state_dict(), path_lr + '/')
 
 f.close()
 f_test.close()

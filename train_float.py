@@ -15,9 +15,8 @@ from plot_error import Plot_Error
 from float_mask import *
 
 # first of all we get the model trained with model's data
-path_model = 'model/model2015_c/'
-list_avaiable_models = os.listdir(path_model)
-select_model = 'model_completion_epoch_501_lrc_0.01.pt '  # select_model = 'model_completion_epoch_250_150_150_lrc_0
+path_model = 'model/model2015/'
+select_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01.pt '  # select_model = 'model_completion_epoch_250_150_150_lrc_0
 # .01_lrd_0.01.pt '
 name_model = select_model[:-3]
 print('model used : ', name_model)
@@ -50,9 +49,9 @@ testing_weight = weight_float[index_test]
 mean_value_pixel = MV_pixel(test_dataset)
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
 
-lr = 1e-01
-epoch = 10  # number of step for the first phase of training
-snaperiod = 1
+lr = 1e-04
+epoch = 75  # number of step for the first phase of training
+snaperiod = 10
 hole_min_d, hole_max_d = 5, 10
 hole_min_h, hole_max_h = 10, 20
 hole_min_w, hole_max_w = 10, 20
@@ -168,6 +167,11 @@ for ep in range(epoch):
                     plt.close()
 
                     if ep == 0:
+                        path_testing_x = path_tensor + '/testing_x/'
+                        if not os.path.exists(path_testing_x):
+                            os.mkdir(path_testing_x)
+                        torch.save(testing_x, path_testing_x + "original_tensor" + ".pt")
+
                         path_fig_channel = path_fig_original + '/' + str(channel)
                         if not os.path.exists(path_fig_channel):
                             os.mkdir(path_fig_channel)
@@ -178,6 +182,7 @@ for ep in range(epoch):
 
 path_model = 'model/float/model_completion_FLOAT_' + str(epoch) + '_epoch_' + str(lr) + '_lr.pt'
 torch.save(model_completion.state_dict(), path_model)
+torch.save(model_completion.state_dict(), path_lr + '/model.pt')
 
 f.close()
 f_test.close()

@@ -469,7 +469,7 @@ if kindof == 'sat':
     # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)
     # plot_routine(kindof, list_weight_sat, list_data_time, channels, year_interval, w)
 
-save_routine(kindof, list_weight_sat, list_data_time, year_interval, 'w')
+# save_routine(kindof, list_weight_sat, list_data_time, year_interval, 'w')
 
 if kindof == 'float':
     save_routine(kindof, list_weight_float, list_data_time, year_interval, 'w')

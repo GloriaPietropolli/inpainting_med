@@ -32,13 +32,13 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.001
-lr_d = 0.001
+lr_c = 0.005
+lr_d = 0.005
 alpha = torch.tensor(alpha)
 num_test_completions = 0
-epoch1 = 750  # number of step for the first phase of training
-epoch2 = 100  # number of step for the second phase of training
-epoch3 = 250  # number of step for the third phase of training
+epoch1 = 1500  # number of step for the first phase of training
+epoch2 = 500  # number of step for the second phase of training
+epoch3 = 500  # number of step for the third phase of training
 snaperiod = 20
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
