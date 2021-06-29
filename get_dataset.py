@@ -73,10 +73,3 @@ def get_list_sat_weight_tensor():
         list_sat_tensor.append(my_tensor)
     return list_sat_tensor
 
-
-if kindof == 'float':
-    list_float_tensor = get_list_float_tensor()
-if kindof == 'model2015':
-    list_model_tensor = get_list_model_tensor()
-if kindof == 'sat':
-    list_sat_tensor = get_list_sat_tensor()

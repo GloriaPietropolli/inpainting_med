@@ -166,14 +166,19 @@ for ep in range(epoch1):
                         plt.savefig(path_fig_channel + "/profondity_level_original_" + str(i) + ".png")
                         plt.close()
 
+    if ep % snaperiod == 0:  # save the partial model
+        path_model = 'model/model2015/model_PHASE1_completion_' + 'epoch_' + str(ep) + '_lrc_' + str(lr_c) + '.pt'
+        torch.save(model_completion.state_dict(), path_model)
+        torch.save(model_completion.state_dict(),
+                   path_lr + '/model_PHASE1_completion_' + 'epoch_' + str(ep) + '_lrc_' + str(lr_c) + '.pt')
+
 f.close()
 f_test.close()
 
-path_model = 'model/model2015/model_ONLY_PHASE1_completion_' + 'epoch_' + str(epoch1) + '_' + str(
-    epoch3) + '_lrc_' + str(lr_c) + '.pt '
+path_model = 'model/model2015/model_PHASE1_completion_' + 'epoch_' + str(epoch1) + '_lrc_' + str(lr_c) + '.pt'
 torch.save(model_completion.state_dict(), path_model)
-torch.save(model_completion.state_dict(), path_lr + '/model_ONLY_PHASE1_completion_' + 'epoch_' + str(epoch1) + '_' + str(
-    epoch3) + '_lrc_' + str(lr_c) + '.pt ')
+torch.save(model_completion.state_dict(),
+           path_lr + '/model_PHASE1_completion_' + 'epoch_' + str(epoch1) + '_lrc_' + str(lr_c) + '.pt')
 
 Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
@@ -340,13 +345,22 @@ for ep in range(epoch3):
                     plt.savefig(path_fig_channel + "/profondity_level_" + str(i) + ".png")
                     plt.close()
 
-# save the model
-
-path_model = 'model/model2015/model_completion_' + 'epoch_' + str(epoch1) + '_' + str(epoch2) + '_' + str(
-    epoch3) + '_lrc_' + str(lr_c) + '_lrd_' + str(lr_d) + '.pt '
-torch.save(model_completion.state_dict(), path_model)
+    if ep % snaperiod == 0:  # save the partial model
+        path_model = 'model/model2015/model_completion_' + 'epoch_' + str(epoch1) + '_' + str(epoch2) + '_' + str(
+            ep) + '_lrc_' + str(lr_c) + '_lrd_' + str(lr_d) + '.pt'
+        torch.save(model_completion.state_dict(), path_model)
+        torch.save(model_completion.state_dict(),
+                   path_lr + '/model_completion_' + 'epoch_' + str(epoch1) + '_' + str(epoch2) + '_'
+                   + str(ep) + '_lrc_' + str(lr_c) + '_lrd_' + str(lr_d) + '.pt')
 
 f.close()
+
+path_model = 'model/model2015/model_completion_' + 'epoch_' + str(epoch1) + '_' + str(epoch2) + '_' + str(
+    epoch3) + '_lrc_' + str(lr_c) + '_lrd_' + str(lr_d) + '.pt'
+torch.save(model_completion.state_dict(), path_model)
+torch.save(model_completion.state_dict(),
+           path_lr + '/model_completion_' + 'epoch_' + str(epoch1) + '_' + str(epoch2) + '_'
+           + str(epoch3) + '_lrc_' + str(lr_c) + '_lrd_' + str(lr_d) + '.pt')
 
 Plot_Error(losses_3_c_test, '3c', path_lr + '/')
 Plot_Error(losses_3_d, '3d', path_lr + '/')

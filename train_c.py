@@ -169,7 +169,7 @@ f_test.close()
 
 Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
-path_model = 'model/model2015_c/model_completion_' + 'epoch_' + str(epoch1) + '_lrc_' + str(lr_c) + '.pt '
+path_model = 'model/model2015_c/model_completion_' + 'epoch_' + str(epoch1) + '_lrc_' + str(lr_c) + '.pt'
 torch.save(model_completion.state_dict(), path_model)
 torch.save(model_completion.state_dict(), path_lr + '/')
 

@@ -1,5 +1,7 @@
 import os
+import random
 import torch
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,7 +13,7 @@ from mean_pixel_value import MV_pixel
 from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution
 
-variable = 'salinity'
+variable = 'chla'
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
 
@@ -45,7 +47,7 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
 epoch_float, lr_float = 50, 0.0001
 
 # model_considered = 'model2015_c/model_completion_epoch_' + str(epoch_model) + '_lrc_' + str(lr_model)
-where = 'model2015_c/'
+where = 'model2015/'
 
 if where == 'model2015/':
     name_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01'
@@ -79,20 +81,22 @@ win2_m, win2_f = 0, 0
 win3_m, win3_f, win3_d = 0, 0, 0
 diff2_m_, diff2_f_ = [], []
 diff3_m_, diff3_f_, diff3_d_ = [], [], []
+data_, model_, float_, emodnet_ = [], [], [], []
 
-path_fig = os.getcwd() + '/emodnet/' + variable + '_comparison_between_' + name_model + '_and_floatmodel_' + str(epoch_float) + '_' + str(lr_float)
+path_fig = os.getcwd() + '/emodnet/' + variable + '_comparison_' + name_model + '_float_' + str(epoch_float) \
+           + '_' + str(lr_float)
 if not os.path.exists(path_fig):
     os.mkdir(path_fig)
 
 f = open(path_fig + "/differences.txt", "w+")
-# f.write(f"[MODEL CONSIDERED]: " + name_model + " \n")
-for i in range(emodnet.shape[0]):  # for every sample considered
+for j in range(25):  # for every sample considered
+    i = random.randint(0, emodnet.shape[0])
     datetime = round(emodnet[i, 0].item(), 2)
     data_tensor = os.getcwd() + '/tensor/model2015_n/datetime_' + str(datetime) + '.pt'
     # get the data_tensor correspondent to the datetime of emodnet sample to feed the nn (NORMALIZED!!)
+
     if not os.path.exists(data_tensor):
         continue
-
     data_tensor = torch.load(data_tensor)
 
     # TEST ON THE MODEL'S MODEL AND THE FLOAT MODEL WITH SAME HOLE
@@ -157,6 +161,9 @@ for i in range(emodnet.shape[0]):  # for every sample considered
     else:
         win2_m = win2_m + 1
 
+    if unkn_data == 0:
+        continue
+
     if i % snaperiod == 0:
         plt.bar(np.arange(3), height=[win3_d, win3_m, win3_f])
         plt.xticks(np.arange(3), ['data', 'model', 'float'])
@@ -174,10 +181,16 @@ for i in range(emodnet.shape[0]):  # for every sample considered
         plt.savefig(path_fig2 + '/comparison_' + str(i) + '.png')
         plt.close()
 
+    data_.append(unkn_data.item())
+    model_.append(unkn_model.item())
+    float_.append(unkn_float.item())
+    emodnet_.append(emodnet_unkn)
+
+    print('\nEMODNET ' + str(variable) + '  : ', emodnet_unkn)
     print('\ndata ' + str(variable) + '     : ', unkn_data.item())
     print('model ' + str(variable) + '    : ', unkn_model.item())
     print('float ' + str(variable) + '    : ', unkn_float.item())
-    print('emodnet ' + str(variable) + '  : ', emodnet_unkn)
+    print('\n------------------------')
 
     f.write("---------------------\n")
     f.write(f"[EMODNET]: {emodnet_unkn:.5e} \n")
@@ -187,3 +200,13 @@ for i in range(emodnet.shape[0]):  # for every sample considered
 
 f.close()
 
+n_measurement = range(len(emodnet_))
+plt.plot(n_measurement, emodnet_, 'r', linewidth=1.25, marker='.', label='EMODNET')
+plt.plot(n_measurement, data_, 'b', linewidth=1, linestyle='dashed', marker='.', label='Model')
+plt.plot(n_measurement, model_, 'g', linewidth=1, linestyle='dotted', marker='.', label='Inpainting Model')
+plt.plot(n_measurement, float_, 'm', linewidth=1, linestyle='dashdot', marker='.', label='Inpainting Float')
+plt.title('Comparison between ' + variable + ' values')
+plt.legend()
+plt.savefig(path_fig + '/comparison.png')
+plt.show()
+plt.close()
