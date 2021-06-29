@@ -29,10 +29,10 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 1e-2
+lr_c = 5e-3
 alpha = torch.tensor(alpha)
 num_test_completions = 0
-epoch1 = 501  # number of step for the first phase of training
+epoch1 = 401  # number of step for the first phase of training
 snaperiod = 10
 hole_min_d1, hole_max_d1 = 28, 29  # different hole size for the first training (no local discriminator here)
 hole_min_h1, hole_max_h1 = 1, 50
@@ -53,11 +53,16 @@ if not os.path.exists(path_lr):
 losses_1_c = []  # losses of the completion network during phase 1
 losses_1_c_test = []  # losses of TEST of the completion network during phase 1
 
-
-# PHASE 1
-# COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
-
 model_completion = CompletionN()
+
+pretrain = 1
+if pretrain:
+    path_pretrain = os.getcwd() + '/starting_model/'
+    model_name = os.listdir(path_pretrain)[0]
+    model_completion = CompletionN()
+    model_completion.load_state_dict(torch.load(path_pretrain + model_name))
+    model_completion.eval()
+
 optimizer_completion = Adadelta(model_completion.parameters(), lr=lr_c)
 f = open(path_lr + "/phase1_losses.txt", "w+")
 f_test = open(path_lr + "/phase1_TEST_losses.txt", "w+")

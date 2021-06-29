@@ -174,10 +174,10 @@ for i in range(emodnet.shape[0]):  # for every sample considered
         plt.savefig(path_fig2 + '/comparison_' + str(i) + '.png')
         plt.close()
 
-    print('\ndata ' + str(variable) + '    : ', unkn_data.item())
+    print('\ndata ' + str(variable) + '     : ', unkn_data.item())
     print('model ' + str(variable) + '    : ', unkn_model.item())
     print('float ' + str(variable) + '    : ', unkn_float.item())
-    print('emodnet ' + str(variable) + '    : ', emodnet_unkn)
+    print('emodnet ' + str(variable) + '  : ', emodnet_unkn)
 
     f.write("---------------------\n")
     f.write(f"[EMODNET]: {emodnet_unkn:.5e} \n")

@@ -18,7 +18,6 @@ from get_dataset import *
 num_channel = number_channel  # 0,1,2,3
 
 path = 'result/model2015'  # result directory
-
 train_dataset = get_list_model_tensor()
 
 index_testing = -1
@@ -32,14 +31,14 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 0.001
-lr_d = 0.001
+lr_c = 0.01
+lr_d = 0.01
 alpha = torch.tensor(alpha)
 num_test_completions = 0
-epoch1 = 1500  # number of step for the first phase of training
-epoch2 = 500  # number of step for the second phase of training
-epoch3 = 500  # number of step for the third phase of training
-snaperiod = 20
+epoch1 = 501  # number of step for the first phase of training
+epoch2 = 501  # number of step for the second phase of training
+epoch3 = 501  # number of step for the third phase of training
+snaperiod = 50
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
@@ -69,6 +68,14 @@ losses_3_c_test = []  # losses of TEST of the completion network during phase 3
 # COMPLETION NETWORK is trained with the MSE loss for T_c (=epoch1) iterations
 
 model_completion = CompletionN()
+
+pretrain = 1
+if pretrain:
+    path_pretrain = os.getcwd() + '/starting_model/'
+    model_name = os.listdir(path_pretrain)[0]
+    model_completion.load_state_dict(torch.load(path_pretrain + model_name))
+    model_completion.eval()
+
 optimizer_completion = Adadelta(model_completion.parameters(), lr=lr_c)
 f = open(path_lr + "/phase1_losses.txt", "w+")
 f_test = open(path_lr + "/phase1_TEST_losses.txt", "w+")
@@ -165,7 +172,8 @@ f_test.close()
 path_model = 'model/model2015/model_ONLY_PHASE1_completion_' + 'epoch_' + str(epoch1) + '_' + str(
     epoch3) + '_lrc_' + str(lr_c) + '.pt '
 torch.save(model_completion.state_dict(), path_model)
-torch.save(model_completion.state_dict(), path_lr + '/')
+torch.save(model_completion.state_dict(), path_lr + '/model_ONLY_PHASE1_completion_' + 'epoch_' + str(epoch1) + '_' + str(
+    epoch3) + '_lrc_' + str(lr_c) + '.pt ')
 
 Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 

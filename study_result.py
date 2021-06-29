@@ -2,7 +2,7 @@ import os
 import torch
 import matplotlib.pyplot as plt
 
-analysis = 'float'
+analysis = 'model'
 
 if analysis == 'float':
     epoch_model = 501
@@ -29,10 +29,12 @@ if analysis == 'float':
             continue
         float_t = torch.load(path_float + float_n)
         model_t = torch.load(path_model + model_n)
-        print('calculating distance between float ' + str(float_n[:-3]) + ' and model epoch_' + str(epoch_model - 1) + '...')
+        print('calculating distance between float ' + str(float_n[:-3]) + ' and model epoch_' + str(
+            epoch_model - 1) + '...')
         diff = float_t - model_t
 
-        path_fig = path + '/result2/' + model_considered + '/' + str(epoch_float) + '/' + str(lr_float) + '/diff/epoch_' + str(i)
+        path_fig = path + '/result2/' + model_considered + '/' + str(epoch_float) + '/' + str(
+            lr_float) + '/diff/epoch_' + str(i)
         if not os.path.exists(path_fig):
             os.mkdir(path_fig)
         number_fig = len(diff[0, 0, :, 0, 0])  # number of levels of depth
@@ -49,7 +51,7 @@ if analysis == 'float':
                 plt.close()
 
 
-if analysis == 'model':
+if analysis == 'model_c':
     epoch_model = 501  # select the model we want to analyze
     lr_model = 0.01
 
