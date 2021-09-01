@@ -13,7 +13,7 @@ from mean_pixel_value import MV_pixel
 from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution
 
-variable = 'chla'
+variable = 'temperature'
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
 
@@ -44,13 +44,14 @@ mvp_dataset, mean_model, std_model = Normalization(mvp_dataset)
 mean_value_pixel = MV_pixel(mvp_dataset)  # compute the mean of the channel of the training set
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
 
-epoch_float, lr_float = 50, 0.0001
+epoch_float, lr_float = 25, 0.0001
 
 # model_considered = 'model2015_c/model_completion_epoch_' + str(epoch_model) + '_lrc_' + str(lr_model)
 where = 'model2015/'
 
 if where == 'model2015/':
-    name_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01'
+    name_model = 'model_ONLY_PHASE1_completion_epoch_501_501_lrc_0.01'
+    # name_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01'
     model_considered = where + name_model
     path_emodnet = os.getcwd() + '/emodnet/' + 'emodnet2015.pt'
     path_model = os.getcwd() + '/model/' + model_considered + '.pt '

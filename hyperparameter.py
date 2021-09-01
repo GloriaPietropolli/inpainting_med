@@ -10,6 +10,8 @@ depth_interval = (0, 600)
 year_interval = (2015, 2016)
 year = 2015
 resolution = (12, 12, 20)
+
+
 kindof = '-'
 if kindof == 'float':
     channels = [0, 1, 2, 3]
