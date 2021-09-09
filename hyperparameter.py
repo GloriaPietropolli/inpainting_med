@@ -12,7 +12,9 @@ year = 2015
 resolution = (12, 12, 20)
 
 
-kindof = '-'
+kindof = 'model2015'
+
+
 if kindof == 'float':
     channels = [0, 1, 2, 3]
 if kindof == 'sat':
