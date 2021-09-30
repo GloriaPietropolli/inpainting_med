@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.optim import Adadelta
 import matplotlib.pyplot as plt
 from IPython import display
+
 from discriminator import Discriminator
 from completion import CompletionN
 from losses import completion_network_loss
@@ -35,10 +36,10 @@ lr_c = 0.01
 lr_d = 0.01
 alpha = torch.tensor(alpha)
 num_test_completions = 0
-epoch1 = 501  # number of step for the first phase of training
-epoch2 = 501  # number of step for the second phase of training
-epoch3 = 501  # number of step for the third phase of training
-snaperiod = 50
+epoch1 = 500  # number of step for the first phase of training
+epoch2 = 500  # number of step for the second phase of training
+epoch3 = 250  # number of step for the third phase of training
+snaperiod = 25
 hole_min_d, hole_max_d = 10, 20
 hole_min_h, hole_max_h = 30, 50
 hole_min_w, hole_max_w = 30, 50
@@ -69,7 +70,7 @@ losses_3_c_test = []  # losses of TEST of the completion network during phase 3
 
 model_completion = CompletionN()
 
-pretrain = 1
+pretrain = 0
 if pretrain:
     path_pretrain = os.getcwd() + '/starting_model/'
     model_name = os.listdir(path_pretrain)[0]

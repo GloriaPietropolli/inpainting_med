@@ -4,6 +4,7 @@ import torch
 
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from get_dataset import get_list_model_tensor
 from completion import CompletionN
@@ -14,7 +15,7 @@ from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution
 
 variable = 'temperature'
-
+print("start...")
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
 
 snaperiod = 25
@@ -50,12 +51,12 @@ epoch_float, lr_float = 25, 0.0001
 where = 'model2015/'
 
 if where == 'model2015/':
-    name_model = 'model_ONLY_PHASE1_completion_epoch_501_501_lrc_0.01'
+    name_model = 'model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01'
     # name_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01'
     model_considered = where + name_model
     path_emodnet = os.getcwd() + '/emodnet/' + 'emodnet2015.pt'
-    path_model = os.getcwd() + '/model/' + model_considered + '.pt '
-    path_model_float = os.getcwd() + '/result2/' + name_model + './' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
+    path_model = os.getcwd() + '/model/' + model_considered + '.pt'
+    path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
 
 if where == 'model2015_c/':
     epoch_model, lr_model = 501, 0.01
@@ -66,6 +67,7 @@ if where == 'model2015_c/':
     path_model_float = os.getcwd() + '/result2/model_completion_epoch_' + str(epoch_model) + '_lrc_' + str(
     lr_model) + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
 
+print("loading emodnet dataset...")
 emodnet = torch.load(path_emodnet)
 print(emodnet.shape)
 
@@ -89,14 +91,25 @@ path_fig = os.getcwd() + '/emodnet/' + variable + '_comparison_' + name_model + 
 if not os.path.exists(path_fig):
     os.mkdir(path_fig)
 
+path_fig2 = path_fig + '/2comp'
+if not os.path.exists(path_fig2):
+    os.mkdir(path_fig2)
+path_ist2 = path_fig2 + '/inst'
+if not os.path.exists(path_ist2):
+    os.mkdir(path_ist2)
+path_bp2 = path_fig2 + '/bp'
+if not os.path.exists(path_bp2):
+    os.mkdir(path_bp2)
+
 f = open(path_fig + "/differences.txt", "w+")
-for j in range(25):  # for every sample considered
-    i = random.randint(0, emodnet.shape[0])
+for i in range(emodnet.shape[0]):  # for every sample considered
+    # i = random.randint(0, emodnet.shape[0])
     datetime = round(emodnet[i, 0].item(), 2)
     data_tensor = os.getcwd() + '/tensor/model2015_n/datetime_' + str(datetime) + '.pt'
     # get the data_tensor correspondent to the datetime of emodnet sample to feed the nn (NORMALIZED!!)
 
     if not os.path.exists(data_tensor):
+        print(data_tensor)
         continue
     data_tensor = torch.load(data_tensor)
 
@@ -150,6 +163,9 @@ for j in range(25):  # for every sample considered
     diff_m = np.abs(emodnet_unkn - unkn_model)
     diff_f = np.abs(emodnet_unkn - unkn_float)
 
+    diff2_f_.append(diff_f)
+    diff2_m_.append(diff_m)
+
     if diff_f <= diff_m and diff_f <= diff_d:
         win3_f = win3_f + 1
     if diff_m < diff_f and diff_m < diff_d:
@@ -166,6 +182,7 @@ for j in range(25):  # for every sample considered
         continue
 
     if i % snaperiod == 0:
+        '''
         plt.bar(np.arange(3), height=[win3_d, win3_m, win3_f])
         plt.xticks(np.arange(3), ['data', 'model', 'float'])
         path_fig3 = path_fig + '/3comp'
@@ -173,13 +190,24 @@ for j in range(25):  # for every sample considered
             os.mkdir(path_fig3)
         plt.savefig(path_fig3 + '/comparison_' + str(i) + '.png')
         plt.close()
+        '''
 
         plt.bar(np.arange(2), height=[win2_m, win2_f])
         plt.xticks(np.arange(2), ['model', 'float'])
-        path_fig2 = path_fig + '/2comp'
-        if not os.path.exists(path_fig2):
-            os.mkdir(path_fig2)
-        plt.savefig(path_fig2 + '/comparison_' + str(i) + '.png')
+        plt.savefig(path_ist2 + '/comparison_' + str(i) + '.png')
+        plt.close()
+
+        # sns.set(context='notebook', style='whitegrid')
+        sns.utils.axlabel(xlabel=None, ylabel='fitness', fontsize=10)
+        box_plot = sns.boxplot(data=[diff2_m_, diff2_f_],
+                               width=.8,
+                               palette = "muted",
+                               # medianprops=dict(color="darkred", alpha=0.8),
+                               showfliers=False)
+
+        plt.xticks(plt.xticks()[0], ['MOD', 'FLO'])
+
+        plt.savefig(path_bp2 + '/comparison_' + str(i) + '.png')
         plt.close()
 
     data_.append(unkn_data.item())
@@ -188,7 +216,7 @@ for j in range(25):  # for every sample considered
     emodnet_.append(emodnet_unkn)
 
     print('\nEMODNET ' + str(variable) + '  : ', emodnet_unkn)
-    print('\ndata ' + str(variable) + '     : ', unkn_data.item())
+    # print('\ndata ' + str(variable) + '     : ', unkn_data.item())
     print('model ' + str(variable) + '    : ', unkn_model.item())
     print('float ' + str(variable) + '    : ', unkn_float.item())
     print('\n------------------------')
@@ -201,9 +229,10 @@ for j in range(25):  # for every sample considered
 
 f.close()
 
+'''
 n_measurement = range(len(emodnet_))
 plt.plot(n_measurement, emodnet_, 'r', linewidth=1.25, marker='.', label='EMODNET')
-plt.plot(n_measurement, data_, 'b', linewidth=1, linestyle='dashed', marker='.', label='Model')
+# plt.plot(n_measurement, data_, 'b', linewidth=1, linestyle='dashed', marker='.', label='Model')
 plt.plot(n_measurement, model_, 'g', linewidth=1, linestyle='dotted', marker='.', label='Inpainting Model')
 plt.plot(n_measurement, float_, 'm', linewidth=1, linestyle='dashdot', marker='.', label='Inpainting Float')
 plt.title('Comparison between ' + variable + ' values')
@@ -211,3 +240,4 @@ plt.legend()
 plt.savefig(path_fig + '/comparison.png')
 plt.show()
 plt.close()
+'''

@@ -12,7 +12,7 @@ year = 2015
 resolution = (12, 12, 20)
 
 
-kindof = 'model2015'
+kindof = '-'
 
 
 if kindof == 'float':

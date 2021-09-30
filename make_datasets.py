@@ -118,6 +118,9 @@ def insert_model_phys_values(year, lat_limits, lon_limits, depth_limits, year_li
     phys_files = os.listdir(path_phys)
 
     for model_file in phys_files:
+        if model_file[0:3] != 'ave':
+            continue
+        print(model_file + ' analysis')
         file_phys = path_phys + model_file
         ds_phys = nc.Dataset(file_phys)
 
@@ -183,6 +186,8 @@ def insert_model_doxy_values(year, lat_limits, lon_limits, depth_limits, year_li
     path_doxy = os.getcwd() + "/dataset/MODEL/" + str(year) + '/O2o/'
     doxy_files = os.listdir(path_doxy)
     for model_file in doxy_files:
+        if model_file[0:3] != 'ave':
+            continue
         file_doxy = path_doxy + model_file
         ds_doxy = nc.Dataset(file_doxy)
 
@@ -244,6 +249,8 @@ def insert_model_chl_values(year, lat_limits, lon_limits, depth_limits, year_lim
     path_chl = os.getcwd() + "/dataset/MODEL/" + str(year) + '/P_l/'
     chl_files = os.listdir(path_chl)
     for model_file in chl_files:
+        if model_file[0:3] != 'ave':
+            continue
         file_chl = path_chl + model_file
         ds_chl = nc.Dataset(file_chl)
 
@@ -464,12 +471,14 @@ if kindof == 'model2015':
     print('chl value inserted')
     insert_model_doxy_values(year, latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     print('doxy value inserted')
+
+    save_routine(kindof, list_parallelepiped, list_data_time, year_interval, t)
+    plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)
+
 if kindof == 'sat':
     insert_sat_values(latitude_interval, longitude_interval, depth_interval, year_interval, resolution)
     # plot_routine(kindof, list_parallelepiped, list_data_time, channels, year_interval, t)
     # plot_routine(kindof, list_weight_sat, list_data_time, channels, year_interval, w)
-
-# save_routine(kindof, list_weight_sat, list_data_time, year_interval, 'w')
 
 if kindof == 'float':
     save_routine(kindof, list_weight_float, list_data_time, year_interval, 'w')

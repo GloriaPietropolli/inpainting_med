@@ -28,7 +28,7 @@ def get_list_model_tensor():
     list_ptFIles = os.listdir(directory_float)
     for ptFiles in list_ptFIles:
         my_tensor = torch.load(directory_float + ptFiles)
-        model_tensor.append(my_tensor)
+        model_tensor.append(my_tensor[:, :, :-1, :, :])
     return model_tensor
 
 
