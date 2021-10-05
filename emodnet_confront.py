@@ -14,6 +14,8 @@ from mean_pixel_value import MV_pixel
 from make_datasets import find_index
 from hyperparameter import latitude_interval, longitude_interval, depth_interval, resolution
 
+sns.set(context='notebook', style='whitegrid')
+
 variable = 'temperature'
 print("start...")
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
@@ -51,7 +53,7 @@ epoch_float, lr_float = 25, 0.0001
 where = 'model2015/'
 
 if where == 'model2015/':
-    name_model = 'model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01'
+    name_model = 'model_PHASE1_completion_epoch_200_lrc_0.01'
     # name_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01'
     model_considered = where + name_model
     path_emodnet = os.getcwd() + '/emodnet/' + 'emodnet2015.pt'
@@ -101,9 +103,20 @@ path_bp2 = path_fig2 + '/bp'
 if not os.path.exists(path_bp2):
     os.mkdir(path_bp2)
 
+path_fig3 = path_fig + '/3comp'
+if not os.path.exists(path_fig3):
+    os.mkdir(path_fig3)
+path_ist3 = path_fig3 + '/inst'
+if not os.path.exists(path_ist3):
+    os.mkdir(path_ist3)
+path_bp3 = path_fig3 + '/bp'
+if not os.path.exists(path_bp3):
+    os.mkdir(path_bp3)
+
+counter = 0
 f = open(path_fig + "/differences.txt", "w+")
-for i in range(emodnet.shape[0]):  # for every sample considered
-    # i = random.randint(0, emodnet.shape[0])
+while counter < 1000:  # for every sample considered
+    i = random.randint(0, emodnet.shape[0])
     datetime = round(emodnet[i, 0].item(), 2)
     data_tensor = os.getcwd() + '/tensor/model2015_n/datetime_' + str(datetime) + '.pt'
     # get the data_tensor correspondent to the datetime of emodnet sample to feed the nn (NORMALIZED!!)
@@ -159,12 +172,19 @@ for i in range(emodnet.shape[0]):  # for every sample considered
     unkn_model = unkn_model * std_unkn + mean_unkn
     unkn_float = unkn_float * std_unkn + mean_unkn
 
+    if unkn_data < 0 or unkn_float < 0:
+        continue
+
     diff_d = np.abs(emodnet_unkn - unkn_data)
     diff_m = np.abs(emodnet_unkn - unkn_model)
     diff_f = np.abs(emodnet_unkn - unkn_float)
 
     diff2_f_.append(diff_f)
     diff2_m_.append(diff_m)
+
+    diff3_f_.append(diff_f)
+    diff3_m_.append(diff_m)
+    diff3_d_.append(diff_d)
 
     if diff_f <= diff_m and diff_f <= diff_d:
         win3_f = win3_f + 1
@@ -181,7 +201,8 @@ for i in range(emodnet.shape[0]):  # for every sample considered
     if unkn_data == 0:
         continue
 
-    if i % snaperiod == 0:
+    counter = counter + 1
+    if counter % snaperiod == 0:
         '''
         plt.bar(np.arange(3), height=[win3_d, win3_m, win3_f])
         plt.xticks(np.arange(3), ['data', 'model', 'float'])
@@ -194,20 +215,31 @@ for i in range(emodnet.shape[0]):  # for every sample considered
 
         plt.bar(np.arange(2), height=[win2_m, win2_f])
         plt.xticks(np.arange(2), ['model', 'float'])
-        plt.savefig(path_ist2 + '/comparison_' + str(i) + '.png')
+        plt.savefig(path_ist2 + '/comparison_' + str(counter) + '.png')
         plt.close()
 
-        # sns.set(context='notebook', style='whitegrid')
         sns.utils.axlabel(xlabel=None, ylabel='fitness', fontsize=10)
         box_plot = sns.boxplot(data=[diff2_m_, diff2_f_],
                                width=.8,
-                               palette = "muted",
+                               palette="muted",
                                # medianprops=dict(color="darkred", alpha=0.8),
                                showfliers=False)
 
         plt.xticks(plt.xticks()[0], ['MOD', 'FLO'])
 
-        plt.savefig(path_bp2 + '/comparison_' + str(i) + '.png')
+        plt.savefig(path_bp2 + '/comparison_' + str(counter) + '.png')
+        plt.close()
+
+        sns.utils.axlabel(xlabel=None, ylabel='fitness', fontsize=10)
+        box_plot = sns.boxplot(data=[diff3_m_, diff3_f_, diff3_d_],
+                               width=.8,
+                               palette="muted",
+                               # medianprops=dict(color="darkred", alpha=0.8),
+                               showfliers=False)
+
+        plt.xticks(plt.xticks()[0], ['MOD-CNN', 'FLO', 'MOD-DET'])
+
+        plt.savefig(path_bp3 + '/comparison_' + str(counter) + '.png')
         plt.close()
 
     data_.append(unkn_data.item())
