@@ -15,8 +15,11 @@ from get_dataset import *
 
 num_channel = number_channel  # 0,1,2,3
 
-path = 'result/model2015_c'  # result directory
+path = 'result/model2015/pretrained'  # result directory
+if not os.path.exists(path):
+    os.mkdir(path)
 
+pretrain = 1
 train_dataset = get_list_model_tensor()
 
 index_testing = -1
@@ -29,10 +32,10 @@ mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1
 
 # definitions of the hyperparameters
 alpha = 4e-4
-lr_c = 5e-3
+lr_c = 1e-4
 alpha = torch.tensor(alpha)
 num_test_completions = 0
-epoch1 = 401  # number of step for the first phase of training
+epoch1 = 100  # number of step for the first phase of training
 snaperiod = 10
 hole_min_d1, hole_max_d1 = 28, 29  # different hole size for the first training (no local discriminator here)
 hole_min_h1, hole_max_h1 = 1, 50
@@ -42,6 +45,22 @@ hole_min_h2, hole_max_h2 = 30, 50
 hole_min_w2, hole_max_w2 = 30, 50
 snaperiod_hole = 2
 
+losses_1_c = []  # losses of the completion network during phase 1
+losses_1_c_test = []  # losses of TEST of the completion network during phase 1
+
+model_completion = CompletionN()
+
+if pretrain:
+    path_pretrain = os.getcwd() + '/starting_model/'
+    model_name = os.listdir(path_pretrain)[0]
+    path = path + model_name
+    if not os.path.exists(path):
+        os.mkdir(path)
+    print("Pretrained model utilised: " + model_name)
+    model_completion = CompletionN()
+    model_completion.load_state_dict(torch.load(path_pretrain + model_name))
+    model_completion.eval()
+
 # make directory
 path_configuration = path + '/' + str(epoch1) + '_epoch'
 if not os.path.exists(path_configuration):
@@ -49,19 +68,6 @@ if not os.path.exists(path_configuration):
 path_lr = path_configuration + '/' + str(lr_c) + '_lr'
 if not os.path.exists(path_lr):
     os.mkdir(path_lr)
-
-losses_1_c = []  # losses of the completion network during phase 1
-losses_1_c_test = []  # losses of TEST of the completion network during phase 1
-
-model_completion = CompletionN()
-
-pretrain = 1
-if pretrain:
-    path_pretrain = os.getcwd() + '/starting_model/'
-    model_name = os.listdir(path_pretrain)[0]
-    model_completion = CompletionN()
-    model_completion.load_state_dict(torch.load(path_pretrain + model_name))
-    model_completion.eval()
 
 optimizer_completion = Adadelta(model_completion.parameters(), lr=lr_c)
 f = open(path_lr + "/phase1_losses.txt", "w+")
@@ -169,7 +175,7 @@ f_test.close()
 
 Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
-path_model = 'model/model2015_c/model_completion_' + 'epoch_' + str(epoch1) + '_lrc_' + str(lr_c) + '.pt'
+path_model = 'model/model2015_pretrained/' + model_name + '_PLUS_epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt'
 torch.save(model_completion.state_dict(), path_model)
 torch.save(model_completion.state_dict(), path_lr + '/')
 
