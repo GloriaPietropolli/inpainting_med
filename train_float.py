@@ -15,8 +15,8 @@ from plot_error import Plot_Error
 from float_mask import *
 
 # first of all we get the model trained with model's data
-path_model = 'model/model2015/'
-select_model = 'model_PHASE1_completion_epoch_200_lrc_0.01.pt'
+path_model = 'model/model2015_pretrained/'
+select_model = 'model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01.pt_PLUS_epoch_100_lr_0.0001.pt'
 # select_model = 'model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01.pt'
 name_model = select_model[:-3]
 print('model used : ', name_model)
@@ -50,7 +50,7 @@ mean_value_pixel = MV_pixel(test_dataset)
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, 4, 1, 1, 1))
 
 lr = 1e-04
-epoch = 25  # number of step for the first phase of training
+epoch = 50  # number of step for the first phase of training
 snaperiod = 1
 hole_min_d, hole_max_d = 5, 10
 hole_min_h, hole_max_h = 10, 20

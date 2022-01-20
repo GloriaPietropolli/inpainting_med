@@ -53,25 +53,16 @@ epoch_float, lr_float = 25, 0.0001
 where = 'model2015/'
 
 if where == 'model2015/':
-    name_model = 'model_PHASE1_completion_epoch_200_lrc_0.01'
+    name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01"
+    # name_model = 'model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01.pt_PLUS_epoch_100_lr_0.0001'
     # name_model = 'model_completion_epoch_250_150_150_lrc_0.01_lrd_0.01'
     model_considered = where + name_model
     path_emodnet = os.getcwd() + '/emodnet/' + 'emodnet2015.pt'
     path_model = os.getcwd() + '/model/' + model_considered + '.pt'
     path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
 
-if where == 'model2015_c/':
-    epoch_model, lr_model = 501, 0.01
-    name_model = 'model_completion_epoch_' + str(epoch_model) + '_lrc_' + str(lr_model)
-    model_considered = 'model2015_c/model_completion_epoch_' + str(epoch_model) + '_lrc_' + str(lr_model)
-    path_emodnet = os.getcwd() + '/emodnet/' + 'emodnet2015.pt'
-    path_model = os.getcwd() + '/model/' + model_considered + '.pt '
-    path_model_float = os.getcwd() + '/result2/model_completion_epoch_' + str(epoch_model) + '_lrc_' + str(
-    lr_model) + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
-
 print("loading emodnet dataset...")
 emodnet = torch.load(path_emodnet)
-print(emodnet.shape)
 
 model = CompletionN()
 model.load_state_dict(torch.load(path_model))  # network trained only with model information
@@ -115,7 +106,7 @@ if not os.path.exists(path_bp3):
 
 counter = 0
 f = open(path_fig + "/differences.txt", "w+")
-while counter < 1000:  # for every sample considered
+while counter < 2000:  # for every sample considered
     i = random.randint(0, emodnet.shape[0])
     datetime = round(emodnet[i, 0].item(), 2)
     data_tensor = os.getcwd() + '/tensor/model2015_n/datetime_' + str(datetime) + '.pt'
@@ -172,7 +163,7 @@ while counter < 1000:  # for every sample considered
     unkn_model = unkn_model * std_unkn + mean_unkn
     unkn_float = unkn_float * std_unkn + mean_unkn
 
-    if unkn_data < 0 or unkn_float < 0:
+    if unkn_data < 0 or unkn_float < 3:
         continue
 
     diff_d = np.abs(emodnet_unkn - unkn_data)

@@ -21,7 +21,4 @@ if kindof == 'sat':
     channels = [3]
 if kindof == 'model2015':
     channels = [0, 1, 2, 3]
-if kindof == 'dumb':
-    channels = [0]
-    dumb_list = 1  # on
 

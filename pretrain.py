@@ -53,7 +53,7 @@ model_completion = CompletionN()
 if pretrain:
     path_pretrain = os.getcwd() + '/starting_model/'
     model_name = os.listdir(path_pretrain)[0]
-    path = path + model_name
+    path = path + '/' + model_name
     if not os.path.exists(path):
         os.mkdir(path)
     print("Pretrained model utilised: " + model_name)
@@ -177,7 +177,8 @@ Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
 path_model = 'model/model2015_pretrained/' + model_name + '_PLUS_epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt'
 torch.save(model_completion.state_dict(), path_model)
-torch.save(model_completion.state_dict(), path_lr + '/')
+torch.save(model_completion.state_dict(), path_lr + '/' + model_name + '_PLUS_epoch_' + str(epoch1) + '_lr_' + str(lr_c)
+           + '.pt')
 
 f.close()
 
