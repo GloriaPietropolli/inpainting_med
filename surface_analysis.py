@@ -69,7 +69,13 @@ for variable in list(dict_channel.keys()):
     model_float.load_state_dict(torch.load(path_model_float))  # network adjusted with float information
     model_float.eval()
 
-    path_fig = os.getcwd() + '/analysis_result/surface_time_series/' + variable
+    path_fig = os.getcwd() + '/analysis_result/surface_time_series/' + name_model[23:] + '/'
+    if not os.path.exists(path_fig):
+        os.mkdir(path_fig)
+    path_fig = path_fig + str(epoch_float) + '_' + str(lr_float) + '/'
+    if not os.path.exists(path_fig):
+        os.mkdir(path_fig)
+    path_fig = path_fig + variable
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
 
@@ -128,9 +134,9 @@ for variable in list(dict_channel.keys()):
     plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8, label="CNN + GAN + float")
     plt.legend()
     plt.ylabel(variable)
-    plt.suptitle("Model")
-    plt.title("Time series of the mean of the surface " + variable)
-    plt.savefig(path_fig + '/' + variable + '_ts_mean_model.png')
+    plt.suptitle("mean")
+    plt.title("Surface time series of the " + variable)
+    plt.savefig(path_fig + '/' + variable + '_ts_mean.png')
     plt.show()
     plt.close()
 
@@ -139,9 +145,9 @@ for variable in list(dict_channel.keys()):
     plt.plot(std_flo, color="purple", linestyle='--', marker='*', alpha=0.8, label="CNN + GAN + float")
     plt.legend()
     plt.ylabel(variable)
-    plt.suptitle("Model")
-    plt.title("Time series of the std of the surface " + variable)
-    plt.savefig(path_fig + '/' + variable + '_ts_std_model.png')
+    plt.suptitle("std")
+    plt.title("Surface time series of the " + variable)
+    plt.savefig(path_fig + '/' + variable + '_ts_std.png')
     plt.show()
     plt.close()
 
