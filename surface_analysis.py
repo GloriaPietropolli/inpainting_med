@@ -16,9 +16,10 @@ from hyperparameter import latitude_interval, longitude_interval, depth_interval
 
 sns.set(context='notebook', style='whitegrid')
 
-variable = 'temperature'
-    dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
+dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
+dict_channel = {'temperature': 0, }
 
+for variable in list(dict_channel.keys()):
     snaperiod = 25
 
     constant_latitude = 111  # 1° of latitude corresponds to 111 km
@@ -74,8 +75,8 @@ variable = 'temperature'
 
     months = ["0" + str(month) for month in range(1, 10)] + [str(month) for month in range(10, 52)]
 
-    means_mod, means_flo = [], []
-    std_mod, std_flo = [], []
+    means_phys, means_mod, means_flo = [], [], []
+    std_phys, std_mod, std_flo = [], [], []
 
     for month in months:  # iteration among months
         if month[-1] == "0":
@@ -102,35 +103,45 @@ variable = 'temperature'
 
         depth_index = 0  # here I consider only surface data
 
-        # unkn_data = data_tensor[:, dict_channel[variable], depth_index_d, emodnet_lon_index, emodnet_lat_index]
+        unkn_phys = data_tensor[:, dict_channel[variable], depth_index, :, :]
         unkn_model = model_result[:, dict_channel[variable], depth_index, :, :]
         unkn_float = float_result[:, dict_channel[variable], depth_index, :, :]
 
-        # unkn_data = unkn_data * std_unkn + mean_unkn
+        unkn_phys = unkn_phys * std_unkn + mean_unkn
         unkn_model = unkn_model * std_unkn + mean_unkn
         unkn_float = unkn_float * std_unkn + mean_unkn
 
+        means_phys.append(torch.mean(unkn_phys))
         means_mod.append(torch.mean(unkn_model))
         means_flo.append(torch.mean(unkn_float))
 
+        std_phys.append(torch.std(unkn_phys))
         std_mod.append(torch.std(unkn_model))
         std_flo.append(torch.std(unkn_float))
 
-    mod = zip(means_mod, std_mod)
+    mod = zip(means_mod, std_mod, means_flo, std_flo, means_phys, std_phys)
     mod = [x for x in mod if x[0] > 5]
-    means_mod, std_mod = zip(*mod)
+    means_mod, std_mod, means_flo, std_flo, means_phys, std_phys = zip(*mod)
 
-    plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+    plt.plot(means_phys, color="slategray", linestyle='--', marker='v', alpha=0.8, label="physical model")
+    plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8, label="CNN + GAN model")
+    plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8, label="CNN + GAN + float")
+    plt.legend()
     plt.ylabel(variable)
     plt.suptitle("Model")
     plt.title("Time series of the mean of the surface " + variable)
     plt.savefig(path_fig + '/' + variable + '_ts_mean_model.png')
+    plt.show()
     plt.close()
 
-    plt.plot(std_mod, color="deeppink", linestyle='--', marker='*', alpha=0.8)
+    plt.plot(std_phys, color="slategray", linestyle='--', marker='v', alpha=0.8, label="physical model")
+    plt.plot(std_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8, label="CNN + GAN model")
+    plt.plot(std_flo, color="purple", linestyle='--', marker='*', alpha=0.8, label="CNN + GAN + float")
+    plt.legend()
     plt.ylabel(variable)
     plt.suptitle("Model")
     plt.title("Time series of the std of the surface " + variable)
     plt.savefig(path_fig + '/' + variable + '_ts_std_model.png')
+    plt.show()
     plt.close()
 
