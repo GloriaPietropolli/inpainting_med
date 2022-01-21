@@ -1,6 +1,5 @@
 """
-Implementation of the training routine for the 3D CNN without GAN
-- train_dataset : list/array of 5D (or 5D ?) tensor in form (bs, input_channels, D_in, H_in, W_in)
+Script for training model that have been already pre-trained
 """
 from torch.optim import Adadelta
 import matplotlib.pyplot as plt
@@ -14,12 +13,12 @@ from plot_error import Plot_Error
 from get_dataset import *
 
 num_channel = number_channel  # 0,1,2,3
+model_name = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01"
 
 path = 'result/model2015/pretrained'  # result directory
 if not os.path.exists(path):
     os.mkdir(path)
 
-pretrain = 1
 train_dataset = get_list_model_tensor()
 
 index_testing = -1
@@ -30,36 +29,33 @@ train_dataset.pop(index_testing)
 mean_value_pixel = MV_pixel(train_dataset)  # compute the mean of the channel of the training set
 mean_value_pixel = torch.tensor(mean_value_pixel.reshape(1, num_channel, 1, 1, 1))
 
-# definitions of the hyperparameters
-alpha = 4e-4
-lr_c = 1e-4
-alpha = torch.tensor(alpha)
-num_test_completions = 0
-epoch1 = 100  # number of step for the first phase of training
-snaperiod = 10
+alpha = torch.tensor(4e-4)
+lr_c = 1e-3
+epoch1 = 500  # number of step for the first phase of training
+
+snaperiod = 25
+snaperiod_hole = 2
+
 hole_min_d1, hole_max_d1 = 28, 29  # different hole size for the first training (no local discriminator here)
 hole_min_h1, hole_max_h1 = 1, 50
 hole_min_w1, hole_max_w1 = 1, 50
 hole_min_d2, hole_max_d2 = 10, 20
 hole_min_h2, hole_max_h2 = 30, 50
 hole_min_w2, hole_max_w2 = 30, 50
-snaperiod_hole = 2
 
 losses_1_c = []  # losses of the completion network during phase 1
 losses_1_c_test = []  # losses of TEST of the completion network during phase 1
 
 model_completion = CompletionN()
 
-if pretrain:
-    path_pretrain = os.getcwd() + '/starting_model/'
-    model_name = os.listdir(path_pretrain)[0]
-    path = path + '/' + model_name
-    if not os.path.exists(path):
-        os.mkdir(path)
-    print("Pretrained model utilised: " + model_name)
-    model_completion = CompletionN()
-    model_completion.load_state_dict(torch.load(path_pretrain + model_name))
-    model_completion.eval()
+path = path + '/' + model_name
+if not os.path.exists(path):
+    os.mkdir(path)
+print("Pretrained model utilised: " + model_name)
+
+model_completion = CompletionN()
+model_completion.load_state_dict(torch.load('model/model2015/' + model_name + '.pt'))
+model_completion.eval()
 
 # make directory
 path_configuration = path + '/' + str(epoch1) + '_epoch'
@@ -104,6 +100,12 @@ for ep in range(epoch1):
 
     # test
     if ep % snaperiod == 0 or ep == epoch1 - 1:
+
+        path_model = 'model/model2015/' + model_name + '+epoch_' + str(ep) + '_lr_' + str(lr_c) + '.pt'
+        torch.save(model_completion.state_dict(), path_model)
+        torch.save(model_completion.state_dict(),
+                   path_lr + '/' + model_name + '+epoch_' + str(ep) + '_lr_' + str(lr_c) + '.pt')
+
         model_completion.eval()
         with torch.no_grad():
             # testing_x = random.choice(test_dataset)
@@ -175,18 +177,14 @@ f_test.close()
 
 Plot_Error(losses_1_c_test, '1c', path_lr + '/')  # plot of the error in phase1
 
-path_model = 'model/model2015_pretrained/' + model_name + '_PLUS_epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt'
+path_model = 'model/model2015/' + model_name + '+epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt'
 torch.save(model_completion.state_dict(), path_model)
-torch.save(model_completion.state_dict(), path_lr + '/' + model_name + '_PLUS_epoch_' + str(epoch1) + '_lr_' + str(lr_c)
-           + '.pt')
+torch.save(model_completion.state_dict(), path_lr + '/' + model_name + '+epoch_' + str(epoch1) + '_lr_' + str(lr_c) + '.pt')
 
 f.close()
 
-# printing specifics of the problem
 print('epoch phase 1 : ', epoch1)
 print('learning rate completion : ', lr_c)
 
-# printing final loss training set
 print('final loss of TRAINING completion network: ', losses_1_c[-1])
-# printing final loss of testing set
 print('final loss TEST : ', losses_1_c_test[-1].item())
