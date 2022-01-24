@@ -18,10 +18,16 @@ sns.set(context='notebook', style='whitegrid')
 
 epoch_float, lr_float = 25, 0.0001
 
+# name_model = "model_PHASE1_completion_epoch_1000_lrc_0.01"
 name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01"
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
 path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
+
+if not os.path.exists(path_model_float):
+    flag_float = False
+else:
+    flag_float = True
 
 dict_channel = {'temperature': 0, 'salinity': 1, 'oxygen': 2, 'chla': 3}
 
@@ -58,9 +64,10 @@ for variable in list(dict_channel.keys()):
     model.load_state_dict(torch.load(path_model))  # network trained only with model information
     model.eval()
 
-    model_float = CompletionN()
-    model_float.load_state_dict(torch.load(path_model_float))  # network adjusted with float information
-    model_float.eval()
+    if flag_float:
+        model_float = CompletionN()
+        model_float.load_state_dict(torch.load(path_model_float))  # network adjusted with float information
+        model_float.eval()
 
     path_fig = os.getcwd() + '/analysis_result/profile/'
     if not os.path.exists(path_fig):
@@ -68,9 +75,10 @@ for variable in list(dict_channel.keys()):
     path_fig = os.getcwd() + '/analysis_result/profile/' + name_model[23:] + '/'
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
-    path_fig = path_fig + str(epoch_float) + '_' + str(lr_float) + '/'
-    if not os.path.exists(path_fig):
-        os.mkdir(path_fig)
+    if flag_float:
+        path_fig = path_fig + str(epoch_float) + '_' + str(lr_float) + '/'
+        if not os.path.exists(path_fig):
+            os.mkdir(path_fig)
     path_fig = path_fig + variable
     if not os.path.exists(path_fig):
         os.mkdir(path_fig)
@@ -78,6 +86,8 @@ for variable in list(dict_channel.keys()):
         os.mkdir(path_fig + '/mean/')
     if not os.path.exists(path_fig + '/std/'):
         os.mkdir(path_fig + '/std/')
+    if not os.path.exists(path_fig + '/mean+std/'):
+        os.mkdir(path_fig + '/mean+std/')
 
     months = ["0" + str(month) for month in range(1, 10)] + [str(month) for month in range(10, 52)]
 
@@ -100,42 +110,74 @@ for variable in list(dict_channel.keys()):
             input = torch.cat((data_tensor_mask, training_mask), dim=1)
 
             model_result = model(input.float())
-            float_result = model_float(input.float())
+            if flag_float:
+                float_result = model_float(input.float())
 
         mean_unkn = mean_model[0, dict_channel[variable], 0, 0, 0]
         std_unkn = std_model[0, dict_channel[variable], 0, 0, 0]
 
-        means_phys, means_mod, means_flo = [], [], []
-        std_phys, std_mod, std_flo = [], [], []
+        means_phys, means_mod = [], []
+        if flag_float:
+            means_flo = []
+        std_phys, std_mod = [], []
+        if flag_float:
+            std_flo = []
 
         for depth_index in range(0, d):  # iteration among depth
             unkn_phys = data_tensor[:, dict_channel[variable], depth_index, :, :]
             unkn_model = model_result[:, dict_channel[variable], depth_index, :, :]
-            unkn_float = float_result[:, dict_channel[variable], depth_index, :, :]
+            if flag_float:
+                unkn_float = float_result[:, dict_channel[variable], depth_index, :, :]
 
             unkn_phys = unkn_phys * std_unkn + mean_unkn
             unkn_model = unkn_model * std_unkn + mean_unkn
-            unkn_float = unkn_float * std_unkn + mean_unkn
+            if flag_float:
+                unkn_float = unkn_float * std_unkn + mean_unkn
 
             means_phys.append(torch.mean(unkn_phys))
             means_mod.append(torch.mean(unkn_model))
-            means_flo.append(torch.mean(unkn_float))
+            if flag_float:
+                means_flo.append(torch.mean(unkn_float))
 
             std_phys.append(torch.std(unkn_phys))
             std_mod.append(torch.std(unkn_model))
-            std_flo.append(torch.std(unkn_float))
+            if flag_float:
+                std_flo.append(torch.std(unkn_float))
 
-        zip_result = zip(means_mod, std_mod, means_flo, std_flo, means_phys, std_phys)
-        zip_result = [x for x in zip_result if x[0] > 5]
-        if zip_result:
-            means_mod, std_mod, means_flo, std_flo, means_phys, std_phys = zip(*zip_result)
+        if flag_float:
+            zip_result = zip(means_mod, std_mod, means_flo, std_flo, means_phys, std_phys)
+            if variable == "oxygen":
+                zip_result = [x for x in zip_result if x[4] > 50]
+            if variable == "salinity":
+                zip_result = [x for x in zip_result if x[4] > 10]
+            if variable == "temperature":
+                zip_result = [x for x in zip_result if x[4] > 8 and x[0] > 8]
+            if zip_result:
+                means_mod, std_mod, means_flo, std_flo, means_phys, std_phys = zip(*zip_result)
+            else:
+                continue
+
         else:
-            continue
+            zip_result = zip(means_mod, std_mod, means_phys, std_phys)
+            if variable == "oxygen":
+                zip_result = [x for x in zip_result if x[2] > 50]
+            if variable == "salinity":
+                zip_result = [x for x in zip_result if x[2] > 10]
+            if variable == "temperature":
+                zip_result = [x for x in zip_result if x[2] > 8 or x[0] > 8]
+            if zip_result:
+                means_mod, std_mod, means_phys, std_phys = zip(*zip_result)
+            else:
+                continue
 
-        plt.plot(means_phys, color="slategray", linestyle='--', marker='v', alpha=0.8, label="physical model")
-        plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8, label="CNN + GAN model")
-        plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8, label="CNN + GAN + float")
-        plt.legend()
+        # MEAN
+        plt.plot(means_phys, color="slategray", linestyle='--', marker='v', alpha=0.8)
+        plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+        if flag_float:
+            plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
+            plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
+        else:
+            plt.legend(["physical model", "CNN"])
         plt.ylabel(variable)
         plt.xlabel("depth")
         plt.suptitle("Week " + str(month))
@@ -143,13 +185,50 @@ for variable in list(dict_channel.keys()):
         plt.savefig(path_fig + '/mean/' + variable + '_pro_mean_' + month + '.png')
         plt.close()
 
-        plt.plot(std_phys, color="slategray", linestyle='--', marker='v', alpha=0.8, label="physical model")
-        plt.plot(std_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8, label="CNN + GAN model")
-        plt.plot(std_flo, color="purple", linestyle='--', marker='*', alpha=0.8, label="CNN + GAN + float")
-        plt.legend()
+        # STD
+        plt.plot(std_phys, color="slategray", linestyle='--', marker='v', alpha=0.8)
+        plt.plot(std_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+        if flag_float:
+            plt.plot(std_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
+            plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
+        else:
+            plt.legend(["physical model", "CNN"])
         plt.ylabel(variable)
         plt.xlabel("depth")
         plt.suptitle("Week " + str(month))
         plt.title("Profile of the std of " + variable)
         plt.savefig(path_fig + '/std/' + variable + '_pro_std_' + month + '.png')
+        plt.close()
+
+        # MEAN + STD
+        plt.plot(means_phys, color="slategray", linestyle='--', marker='h', alpha=0.8)
+        plt.fill_between(range(len(means_phys)),
+                         np.array(means_phys) - np.array(std_phys) / 2,
+                         np.array(means_phys) + np.array(std_phys) / 2,
+                         color="slategray",
+                         alpha=0.2
+                         )
+        plt.plot(means_mod, color="deeppink", linestyle='--', marker='o', alpha=0.8)
+        plt.fill_between(range(len(means_mod)),
+                         np.array(means_mod) - np.array(std_mod) / 2,
+                         np.array(means_mod) + np.array(std_mod) / 2,
+                         color="deeppink",
+                         alpha=0.2
+                         )
+        if flag_float:
+            plt.plot(means_flo, color="purple", linestyle='--', marker='*', alpha=0.8)
+            plt.fill_between(range(len(means_flo)),
+                             np.array(means_flo) - np.array(std_flo) / 2,
+                             np.array(means_flo) + np.array(std_flo) / 2,
+                             color="purple",
+                             alpha=0.2
+                             )
+            plt.legend(["physical model", "CNN + GAN model", "CNN + GAN + float"])
+        else:
+            plt.legend(["physical model", "CNN"])
+        plt.ylabel(variable)
+        plt.xlabel("depth")
+        plt.suptitle("Week " + str(month))
+        plt.title("Profile of the std of " + variable)
+        plt.savefig(path_fig + '/mean+std/' + variable + '_pro_std_' + month + '.png')
         plt.close()

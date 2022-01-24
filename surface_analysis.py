@@ -18,9 +18,9 @@ sns.set(context='notebook', style='whitegrid')
 
 epoch_float, lr_float = 25, 0.0001
 
-# name_model = "model_PHASE1_completion_epoch_250_lrc_0.01"
+name_model = "model_PHASE1_completion_epoch_1000_lrc_0.01"
 # name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01"
-name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01.pt_PLUS_epoch_100_lr_0.0001"
+# name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01+epoch_250_lr_0.001"
 
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
@@ -136,7 +136,6 @@ for variable in list(dict_channel.keys()):
         if flag_float:
             std_flo.append(torch.std(unkn_float))
 
-    print(variable)
     if flag_float:
         zip_result = zip(means_mod, std_mod, means_flo, std_flo, means_phys, std_phys)
         if variable == "oxygen":
