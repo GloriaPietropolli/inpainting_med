@@ -105,6 +105,10 @@ for variable in list(dict_channel.keys()):
 
         diff_float_model = unkn_model - unkn_float
         diff_float_model[unkn_phys[:, :, :-1, :, :] < 5] = 0
+
+        diff_model_phys = unkn_model - unkn_phys[:, :, :-1, :, :]
+        diff_model_phys[unkn_phys[:, :, :-1, :, :] < 5] = 0
+
         diff_phys_float = unkn_phys[:, :, :-1, :, :] - unkn_float
         diff_phys_float[unkn_phys[:, :, :-1, :, :] < 5] = 0
 
@@ -116,6 +120,10 @@ for variable in list(dict_channel.keys()):
         if not os.path.exists(path_pf):
             os.mkdir(path_pf)
 
+        path_mf = path_fig + "/model-phys/"
+        if not os.path.exists(path_mf):
+            os.mkdir(path_mf)
+
         path_fm_month = path_fm + "/2015." + month + "/"
         if not os.path.exists(path_fm_month):
             os.mkdir(path_fm_month)
@@ -123,6 +131,10 @@ for variable in list(dict_channel.keys()):
         path_pf_month = path_pf + "/2015." + month + "/"
         if not os.path.exists(path_pf_month):
             os.mkdir(path_pf_month)
+
+        path_mf_month = path_mf + "/2015." + month + "/"
+        if not os.path.exists(path_mf_month):
+            os.mkdir(path_mf_month)
 
         for depth_index in range(0, d):  # iteration among depth
 
@@ -133,12 +145,25 @@ for variable in list(dict_channel.keys()):
             cmap = plt.get_cmap('PiYG')
             plt.imshow(diff_float_model[0, dict_channel[variable], depth_index, :, :], cmap=cmap, vmin=fm_min, vmax=fm_max)
             plt.colorbar()
-            plt.savefig(path_fm_month + "/depth_" + str(depth_index) + ".png")
+            plt.suptitle("week: " + str(month) + " - depth index: " + str(depth_index))
+            plt.title("CNN+GAN+float - CNN+GAN sec. diff. for " + variable)
+            plt.savefig(path_fm_month + "/fm_" + variable + "_week_" + str(month) + "_depth_" + str(depth_index) + ".png")
             plt.close()
 
             cmap = plt.get_cmap('PRGn')
             plt.imshow(diff_phys_float[0, dict_channel[variable], depth_index, :, :], cmap=cmap, vmin=pf_min, vmax=pf_max)
             plt.colorbar()
-            plt.savefig(path_pf_month + "/depth_" + str(depth_index) + ".png")
+            plt.suptitle("week: " + str(month) + " - depth index: " + str(depth_index))
+            plt.title("CNN+GAN+float - physical model sec. diff. for " + variable)
+            plt.savefig(path_pf_month + "/pf_" + variable + "_week_" + str(month) + "_depth_" + str(depth_index) + ".png")
+            plt.close()
+
+            cmap = plt.get_cmap('PuOr')
+            plt.imshow(diff_model_phys[0, dict_channel[variable], depth_index, :, :], cmap=cmap, vmin=pf_min,
+                       vmax=pf_max)
+            plt.colorbar()
+            plt.suptitle("week: " + str(month) + " - depth index: " + str(depth_index))
+            plt.title("CNN+GAN - physical model sec. diff. for " + variable)
+            plt.savefig(path_mf_month + "/mp_" + variable + "_week_" + str(month) + "_depth_" + str(depth_index) + ".png")
             plt.close()
 

@@ -19,7 +19,7 @@ sns.set(context='notebook', style='whitegrid')
 epoch_float, lr_float = 25, 0.0001
 
 # name_model = "model_PHASE1_completion_epoch_1000_lrc_0.01"
-name_model = "model_completion_epoch_500_500_200_lrc_0.01_lrd_0.01"
+name_model = "model_completion_epoch_1000_1000_325_lrc_0.01_lrd_0.01"
 model_considered = 'model2015/' + name_model
 path_model = os.getcwd() + '/model/' + model_considered + '.pt'
 path_model_float = os.getcwd() + '/result2/' + name_model + '/' + str(epoch_float) + '/' + str(lr_float) + '/model.pt'
